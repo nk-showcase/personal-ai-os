@@ -1,0 +1,70 @@
+# TARGET template. Note the two layers: bot.integrations_worker.run_loop(), called
+# with no applier, is inert (it uses a stub). BUT the module's entry point main()
+# — which THIS unit's ExecStart runs (python -m bot.integrations_worker) — wires in
+# a LIVE Notion/Todoist applier that makes real network calls. So installing and
+# starting this unit activates the real integrations; do it only after the machine
+# account, secrets, and service-user boundary below are provisioned.
+#
+# Operator requirement — service-user boundary:
+# The OS account the integrations-worker runs under MUST be distinct from the
+# coding worker's account. This keeps the on-disk secret boundary (Notion API
+# key, integration OAuth tokens) from being shared with the coding executor.
+# Hence User=ai-os-integrations (a separate user from the coding worker). That
+# account is created OUTSIDE this template (a provisioning step). If the account
+# does not exist when the unit is installed, systemd refuses to start it — this
+# is a hard precondition, not a silent fallback to the coding worker's account.
+#
+# Integrations: Notion / Todoist / model API / classifier backup.
+# NOTE: in this build, write operations to Notion/Todoist execute directly once
+# enqueued (no interactive preview step ships; a preview+confirm gate for
+# outbound writes is a documented target - see docs/security/threat-model.md).
+# No Claude Code credentials and no GitHub token.
+#
+# The WorkingDirectory below is intentionally rooted under the coding worker's
+# home — the code is shared read-only between the coding worker and the
+# integrations-worker. For the OS-user boundary to hold, the operator must ALSO
+# enforce these filesystem permissions:
+#   * ${AIOS_HOME} mode 0755 (group-readable), but
+#   * ${AIOS_HOME}/.ai-os/env/*.env mode 0600 (private to each service user)
+#   * ${AIOS_INTEGRATIONS_HOME}/.ai-os/env/integrations-worker.env mode 0600
+# Token isolation lives in the EnvironmentFile partition, NOT in WorkingDirectory.
+# For stronger isolation (separate code trees), change WorkingDirectory + ExecStart
+# to ${AIOS_INTEGRATIONS_HOME}/apps/app/.venv/bin/python and arrange a read-only
+# bind-mount or a duplicate checkout.
+[Unit]
+Description=AI OS - Integrations Worker (Notion/Todoist reads and writes)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Distinct OS user from the coding worker. Hard precondition for the token
+# boundary — secrets for integrations live in this user's private files, not
+# shared with the coding executor.
+User=ai-os-integrations
+WorkingDirectory=${AIOS_HOME}/apps/app
+ExecStart=${AIOS_HOME}/apps/app/.venv/bin/python -m bot.integrations_worker
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+Environment=HOME=${AIOS_INTEGRATIONS_HOME}
+# Put ~/.local/bin on PATH so the secret-manager CLI resolves under systemd.
+# AIOS_SECRETS_BACKEND=bitwarden REQUIRES this CLI to be resolvable; otherwise the
+# integration secrets (Notion/Todoist/classifier) cannot be resolved.
+Environment=PATH=${AIOS_INTEGRATIONS_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin
+# Share the transport's ONE queue DB. Different OS user -> pin the absolute path
+# (AIOS_DATA_DB) and use group-rw perms (AIOS_DATA_DB_GROUP) so cross-user read/write works.
+Environment=AIOS_DATA_DB=${AIOS_HOME}/.ai-os/data/aios.sqlite3
+Environment=AIOS_DATA_DB_GROUP=aios-queue
+Environment=AIOS_SECRETS_BACKEND=bitwarden
+# Faster claim so a proxied Notion/Todoist op is picked up in ~0.25s (interactive latency).
+Environment=AIOS_INTEGRATIONS_POLL_S=0.25
+# The worker's own machine-account token (scope NOTION/TODOIST), private to THIS
+# OS user (isolated from the coding executor). The operator places it at the path below,
+# mode 0600 (NOT in git). '-' = do not fail if the file is not present yet.
+EnvironmentFile=-${AIOS_INTEGRATIONS_HOME}/.ai-os/env/integrations-worker.env
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

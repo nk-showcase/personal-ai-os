@@ -1,0 +1,8 @@
+# Requires Python 3.12 (runtime 3.12.8; the code uses 3.10+ syntax).
+python-telegram-bot[job-queue]==21.3
+python-dotenv==1.0.1
+httpx==0.27.0
+anthropic>=0.45.0
+claude-agent-sdk==0.1.64
+# at-rest encryption of personal free-text (schema 3 — bot/context_store.py)
+cryptography==49.0.0

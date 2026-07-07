@@ -1,0 +1,222 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="65bd71144e">
+  <diagram name="Encryption (EN)" id="encryption-envelope-en">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1150" pageHeight="740" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== TRUST ZONES (dashed frames) ===== -->
+        <mxCell id="z_owner" value="Owner machine (offline)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;fontSize=13;fontStyle=1;align=center;verticalAlign=top;fontColor=#000000;fontFamily=Helvetica;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="260" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z_keys" value="Key location (worker user only, outside the data directory)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;fontSize=13;fontStyle=1;align=center;verticalAlign=top;fontColor=#000000;fontFamily=Helvetica;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="380" y="60" width="560" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z_mem" value="Worker process memory (never on disk)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;fontSize=13;fontStyle=1;align=center;verticalAlign=top;fontColor=#000000;fontFamily=Helvetica;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="560" height="400" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z_store" value="Context store (data location on disk)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;fontSize=13;fontStyle=1;align=center;verticalAlign=top;fontColor=#000000;fontFamily=Helvetica;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="680" y="300" width="260" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- ===== NODES ===== -->
+        <!-- Recovery identity (owner zone) -->
+        <mxCell id="b_rec" value="Recovery age identity&#10;&#10;• offline keypair held by the owner&#10;• disaster path for kek.age recovery" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="60" y="100" width="220" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Master key KEK (keys zone, left) -->
+        <mxCell id="b_kek" value="Master key (KEK)&#10;&#10;• on disk only as age-encrypted kek.age&#10;• SHA-256 fingerprint pinned in code" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="400" y="100" width="240" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Worker identity (keys zone, right) -->
+        <mxCell id="b_ident" value="Worker age identity&#10;&#10;• readable by worker user only&#10;  (0600 = owner-only file permissions)&#10;• never stored beside the data" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="690" y="95" width="230" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Plaintext (memory zone) -->
+        <mxCell id="b_plain" value="Plaintext free text&#10;&#10;• journal notes, chat memory&#10;• never written to disk as cleartext" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="70" y="360" width="220" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Data key DEK (memory zone) -->
+        <mxCell id="b_dek" value="Data key (DEK)&#10;&#10;• fresh 256-bit key per row and field&#10;• one row = one blast radius&#10;  (a leak exposes only that row)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="380" y="355" width="230" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Decrypt on read (memory zone, process style) -->
+        <mxCell id="b_read" value="Decrypt on read  (process)&#10;&#10;• unwraps DEK, verifies row binding&#10;• returns plaintext to the worker only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="340" y="560" width="230" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Envelope record (store zone) -->
+        <mxCell id="b_env" value="Envelope record&#10;&#10;• wrapped DEK, nonces, KEK generation&#10;• authenticated (tamper-evident) ciphertext,&#10;  self-describing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="740" y="345" width="180" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- Fail-closed contract (note / callout, sharp folded corner) -->
+        <mxCell id="b_fail" value="On any failure: stop, quarantine,&#10;never emit cleartext&#10;&#10;• key absent -> writes and reads raise&#10;• tamper -> quarantine, never cleartext" style="shape=note;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;size=18;" vertex="1" parent="1">
+          <mxGeometry x="700" y="545" width="240" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LEGEND (top-right) ===== -->
+        <mxCell id="legend" value="Legend&#10;&#10;dashed frame = where it lives (trust zone)&#10;solid rounded box = key / data / process&#10;folded-corner note = policy&#10;numbered arrow = step order (initiator -&gt; resource)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontFamily=Helvetica;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="960" y="60" width="170" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- ===== EDGES (labels attached to edge value) ===== -->
+
+        <!-- Recovery unwraps KEK (support, top row) -->
+        <mxCell id="e_rec_kek" value="unwraps kek.age (recovery)" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=bottom;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_rec" target="b_kek">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Worker identity unwraps KEK (support, top row) -->
+        <mxCell id="e_ident_kek" value="unwraps kek.age (runtime)" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=bottom;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_ident" target="b_kek">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- WRITE PATH -->
+        <!-- 1: DEK encrypts plaintext (DEK -> plaintext) -->
+        <mxCell id="e_dek_plain" value="1. DEK encrypts plaintext" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=bottom;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_dek" target="b_plain">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- 2: KEK wraps DEK (KEK -> DEK) -->
+        <mxCell id="e_kek_dek" value="2. KEK wraps DEK" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=middle;align=center;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.35;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_kek" target="b_dek">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- 3: worker writes envelope to store (DEK -> Envelope) -->
+        <mxCell id="e_dek_env" value="3. worker writes envelope&#10;(wrapped DEK + ciphertext)" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=bottom;exitX=1;exitY=0.65;exitDx=0;exitDy=0;entryX=0;entryY=0.68;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_dek" target="b_env">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- READ PATH -->
+        <!-- 4: reader reads envelope back (Envelope -> Decrypt on read) -->
+        <mxCell id="e_env_read" value="4. reader reads&#10;envelope back" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=middle;align=center;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_env" target="b_read">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="520" />
+              <mxPoint x="513" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 5: process unwraps DEK + decrypts (Decrypt on read -> DEK) -->
+        <mxCell id="e_read_dek" value="5. unwraps DEK + decrypts" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=middle;align=center;exitX=0.67;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_read" target="b_dek">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- 6: on failure -> fail closed (Decrypt on read -> Fail-closed) -->
+        <mxCell id="e_read_fail" value="6. on any failure" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=bottom;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_read" target="b_fail">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Encryption (EN copy)" id="encryption-envelope-en2">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1150" pageHeight="740" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="z_owner" value="Owner machine (offline)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;fontSize=13;fontStyle=1;align=center;verticalAlign=top;fontColor=#000000;fontFamily=Helvetica;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="260" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z_keys" value="Key location (worker user only, outside the data directory)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;fontSize=13;fontStyle=1;align=center;verticalAlign=top;fontColor=#000000;fontFamily=Helvetica;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="380" y="60" width="560" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z_mem" value="Worker process memory (never on disk)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;fontSize=13;fontStyle=1;align=center;verticalAlign=top;fontColor=#000000;fontFamily=Helvetica;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="560" height="400" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z_store" value="Context store (data location on disk)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;fontSize=13;fontStyle=1;align=center;verticalAlign=top;fontColor=#000000;fontFamily=Helvetica;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="680" y="300" width="260" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_rec" value="Recovery age identity&#10;&#10;• offline keypair held by the owner&#10;• disaster path for kek.age recovery" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="60" y="100" width="220" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_kek" value="Master key (KEK)&#10;&#10;• on disk only as age-encrypted kek.age&#10;• SHA-256 fingerprint pinned in code" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="400" y="100" width="240" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_ident" value="Worker age identity&#10;&#10;• readable by worker user only&#10;  (0600 = owner-only file permissions)&#10;• never stored beside the data" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="690" y="95" width="230" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_plain" value="Plaintext free text&#10;&#10;• journal notes, chat memory&#10;• never written to disk as cleartext" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="70" y="360" width="220" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_dek" value="Data key (DEK)&#10;&#10;• fresh 256-bit key per row and field&#10;• one row = one blast radius&#10;  (a leak exposes only that row)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="380" y="355" width="230" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_read" value="Decrypt on read  (process)&#10;&#10;• unwraps DEK, verifies row binding&#10;• returns plaintext to the worker only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="340" y="560" width="230" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_env" value="Envelope record&#10;&#10;• wrapped DEK, nonces, KEK generation&#10;• authenticated (tamper-evident) ciphertext,&#10;  self-describing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="740" y="345" width="180" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_fail" value="On any failure: stop, quarantine,&#10;never emit cleartext&#10;&#10;• key absent -> writes and reads raise&#10;• tamper -> quarantine, never cleartext" style="shape=note;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;align=left;verticalAlign=middle;spacingLeft=10;fontFamily=Helvetica;size=18;" vertex="1" parent="1">
+          <mxGeometry x="700" y="545" width="240" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend" value="Legend&#10;&#10;dashed frame = where it lives (trust zone)&#10;solid rounded box = key / data / process&#10;folded-corner note = policy&#10;numbered arrow = step order (initiator -&gt; resource)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=11;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontFamily=Helvetica;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="960" y="60" width="170" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_rec_kek" value="unwraps kek.age (recovery)" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=bottom;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_rec" target="b_kek">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_ident_kek" value="unwraps kek.age (runtime)" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=bottom;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_ident" target="b_kek">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_dek_plain" value="1. DEK encrypts plaintext" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=bottom;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_dek" target="b_plain">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_kek_dek" value="2. KEK wraps DEK" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=middle;align=center;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.35;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_kek" target="b_dek">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_dek_env" value="3. worker writes envelope&#10;(wrapped DEK + ciphertext)" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=bottom;exitX=1;exitY=0.65;exitDx=0;exitDy=0;entryX=0;entryY=0.68;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_dek" target="b_env">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_env_read" value="4. reader reads&#10;envelope back" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=middle;align=center;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_env" target="b_read">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="520" />
+              <mxPoint x="513" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e_read_dek" value="5. unwraps DEK + decrypts" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=middle;align=center;exitX=0.67;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_read" target="b_dek">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_read_fail" value="6. on any failure" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1.5;fontSize=11;fontColor=#000000;fontFamily=Helvetica;verticalAlign=bottom;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b_read" target="b_fail">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,30 @@
+# The claude-worker service: consumer of the durable task queue. The coding executor is
+# Claude Code running on the server; its Claude login is a local-only file under ~/.claude
+# (not from the secret manager, not from env). This service does NOT need the Telegram token.
+# Pushes to a working branch run without confirmation; pushes to main and force-pushes require
+# confirmation and are enforced by the guard hooks (see docs/security/approval-policy.md).
+[Unit]
+Description=AI OS - Claude Worker (coding executor)
+After=network-online.target aios-telegram-bot.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ai-os
+WorkingDirectory=${AIOS_HOME}/apps/app
+ExecStart=${AIOS_HOME}/apps/app/.venv/bin/python -m bot.claude_worker
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+Environment=HOME=${AIOS_HOME}
+# Put ~/.local/bin on PATH so secrets_loader finds `bws` (Bitwarden CLI) under systemd.
+# systemd's default PATH excludes ~/.local/bin; without this, AIOS_SECRETS_BACKEND=bitwarden silently
+# no-ops and this worker's secrets (ANTHROPIC_API_KEY, GITHUB_REPO_WRITE_TOKEN) would not resolve.
+Environment=PATH=${AIOS_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin
+# Per-service env: AIOS_SECRETS_BACKEND + the service's BWS_ACCESS_TOKEN (scope: claude-worker).
+# Values are NOT in git. The leading '-' means: do not fail if the file does not exist yet.
+EnvironmentFile=-${AIOS_HOME}/.ai-os/env/claude-worker.env
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

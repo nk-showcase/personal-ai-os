@@ -1,0 +1,22 @@
+# V2 sync-service unit. The bot.sync_service module is IMPLEMENTED (polling git pull --ff-only).
+# Auto-sync: periodically (AIOS_SYNC_POLL_S, default 60s) pulls changes from the
+# Git remote strictly ff-only — it never overwrites local state.
+# Polling implementation: zero inbound ports / no webhook secret; a webhook is a future
+# speedup, not the basis of the coding flow (see docs/sync/auto-sync-rules.md).
+[Unit]
+Description=AI OS - Git Sync (pull --ff-only on push)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ai-os
+WorkingDirectory=${AIOS_HOME}/apps/ChatBot
+ExecStart=${AIOS_HOME}/apps/ChatBot/.venv/bin/python -m bot.sync_service
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

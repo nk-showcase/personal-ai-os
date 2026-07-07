@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  compile:
+    name: Byte-compile (required)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Byte-compile bot and scripts
+        # Hard gate: every module must compile on Python 3.12.
+        run: |
+          python -m py_compile $(find bot scripts -name '*.py' -print)
+
+  test:
+    name: Test suite
+    runs-on: ubuntu-latest
+    needs: compile
+    env:
+      # Dummy, non-secret values so `bot.config` imports at test time.
+      # These are NOT real credentials.
+      TELEGRAM_BOT_TOKEN: "000:dummy"
+      TELEGRAM_OWNER_ID: "123456789"
+      ANTHROPIC_API_KEY: "sk-ant-dummy"
+      PYTHONPATH: "."
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install age (for at-rest encryption tests)
+        run: sudo apt-get update && sudo apt-get install -y age
+
+      - name: Preflight check
+        run: sh scripts/check_setup.sh || true
+
+      - name: Run test suite
+        # Each test is a standalone script that exits non-zero on failure.
+        # Tests that require infrastructure absent in CI self-skip.
+        run: |
+          rc=0
+          for t in scripts/test_*.py; do
+            echo "::group::$t"
+            python "$t" || rc=1
+            echo "::endgroup::"
+          done
+          exit $rc

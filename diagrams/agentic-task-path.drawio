@@ -1,0 +1,567 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Task Path (EN)" id="task-path-en">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1520" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================= TITLE ================= -->
+        <mxCell id="title" value="Agentic task path: task from phone to deployed code" style="text;html=1;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="760" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ================= LEGEND (top-right) ================= -->
+        <mxCell id="legend_box" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontFamily=Helvetica;dashed=1;dashPattern=6 4;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="20" width="350" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_title" value="Legend" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="26" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_frame" value="Dashed frame = trust boundary (one OS user)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="50" width="330" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_box" value="Solid rounded box = service (a program)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="72" width="330" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_cyl" value="Cylinder = data store (durable queue on disk)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="94" width="330" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_dia" value="Diamond = decision  /  [x] = branch condition" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="116" width="330" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_arrow" value="Arrow points from initiator to resource" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="138" width="330" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= SWIMLANES (trust boundaries) ================= -->
+        <mxCell id="lane1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;dashPattern=6 4;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="1460" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="lane1_lbl" value="Owner phone (Telegram)" style="text;html=1;align=left;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="52" y="206" width="190" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lane2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;dashPattern=6 4;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="350" width="1460" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="lane2_lbl" value="Transport bot (no keys, no code access)" style="text;html=1;align=left;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="356" width="290" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lane3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;dashPattern=6 4;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="500" width="1460" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="lane3_lbl" value="Coding worker (Claude Code)" style="text;html=1;align=left;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="506" width="240" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lane4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;dashPattern=6 4;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="660" width="1460" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="lane4_lbl" value="Host: git + systemd ($VPS_HOST, ${AIOS_HOME})" style="text;html=1;align=left;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="666" width="340" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= LANE 1 NODES ================= -->
+        <mxCell id="start" value="" style="shape=startState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="80" y="255" width="30" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_send" value="Send task&#10;(coding request in Telegram)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="160" y="240" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_ask" value="Owner gets Allow / Deny buttons" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="700" y="240" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_confirm" value="Owner gets result summary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="240" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="end_ok" value="" style="shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="255" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="end_ok_lbl" value="Delivered" style="text;html=1;align=center;verticalAlign=top;fontSize=11;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="288" width="90" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= LANE 2 NODES ================= -->
+        <mxCell id="b_transport" value="Transport bot&#10;verifies owner, enqueues task" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="160" y="390" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="queue" value="Durable queue&#10;(survives restart)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="430" y="378" width="110" height="84" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rh_policy" value="Policy gateway:&#10;allowlisted and approved?" style="rhombus;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="610" y="360" width="180" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_reject" value="Notify owner of rejection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="390" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="end_rej" value="" style="shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="405" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="end_rej_lbl" value="Rejected" style="text;html=1;align=center;verticalAlign=top;fontSize=11;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="438" width="90" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= LANE 3 NODES ================= -->
+        <mxCell id="b_worker" value="Coding worker&#10;claims task, edits code, runs tests" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="160" y="545" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rh_risky" value="Mid-session gate:&#10;risky tool call?" style="rhombus;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="610" y="515" width="180" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_commit" value="Commit and push&#10;(scoped repo token)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="545" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_abort" value="Abort task, nothing pushed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="545" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="end_abort" value="" style="shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1325" y="620" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="end_abort_lbl" value="Aborted" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1365" y="626" width="90" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= LANE 4 NODES ================= -->
+        <mxCell id="b_sync" value="Git sync on host&#10;git pull --ff-only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="700" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rh_compile" value="Compile gate:&#10;py_compile passes?" style="rhombus;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="610" y="670" width="180" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_restart" value="Systemd restart&#10;(new version starts)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="330" y="700" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_keepold" value="Keep old version, alert owner" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="795" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="end_fail" value="" style="shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="805" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="end_fail_lbl" value="Old version kept" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="811" width="120" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= EDGES ================= -->
+        <!-- start -> send -->
+        <mxCell id="e_start_send" value="opens chat" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="start" target="b_send">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- send -> transport (straight down, x=260) -->
+        <mxCell id="e_send_transport" value="sends message" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_send" target="b_transport">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- transport -> queue -->
+        <mxCell id="e_transport_queue" value="enqueues task" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_transport" target="queue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- queue -> policy -->
+        <mxCell id="e_queue_policy" value="reads task" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="queue" target="rh_policy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- policy [rejected] -> reject -->
+        <mxCell id="e_policy_reject" value="[rejected]" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_policy" target="b_reject">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_reject_end" value="done" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_reject" target="end_rej">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- policy [approved] -> worker (straight down, x=700) -->
+        <mxCell id="e_policy_worker" value="[approved]" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_policy" target="b_worker">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="520" />
+              <mxPoint x="260" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- worker -> risky gate -->
+        <mxCell id="e_worker_risky" value="each tool call" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_worker" target="rh_risky">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- risky [yes] -> ask owner (up, x=790 riser) -->
+        <mxCell id="e_risky_ask" value="[yes] asks owner" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_risky" target="b_ask">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="545" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ask [allow] -> worker (down-left, x=620 riser to worker top) -->
+        <mxCell id="e_ask_allow" value="[allow] resume" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_ask" target="b_worker">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="750" y="330" />
+              <mxPoint x="120" y="330" />
+              <mxPoint x="120" y="575" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ask [deny] -> abort (right, x=1340 down) -->
+        <mxCell id="e_ask_deny" value="[deny / timeout]" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_ask" target="b_abort">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="850" y="215" />
+              <mxPoint x="1340" y="215" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_abort_end" value="done" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_abort" target="end_abort">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- risky [no] -> commit -->
+        <mxCell id="e_risky_commit" value="[no] safe" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_risky" target="b_commit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- commit -> sync (straight down, x=1000) -->
+        <mxCell id="e_commit_sync" value="pushes branch" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_commit" target="b_sync">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- sync -> compile gate (left, same Y=730) -->
+        <mxCell id="e_sync_compile" value="new HEAD" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_sync" target="rh_compile">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- compile [pass] -> restart (left, same Y=730) -->
+        <mxCell id="e_compile_restart" value="[py_compile ok]" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_compile" target="b_restart">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- compile [fail] -> keep old (down then right, x=700 riser) -->
+        <mxCell id="e_compile_fail" value="[fail]" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_compile" target="b_keepold">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_keepold_end" value="done" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_keepold" target="end_fail">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- restart -> confirm (up to lane1, riser at x=430) -->
+        <mxCell id="e_restart_confirm" value="restarted, notifies owner" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_restart" target="b_confirm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="430" y="160" />
+              <mxPoint x="1100" y="160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- confirm -> end_ok -->
+        <mxCell id="e_confirm_end" value="delivered" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_confirm" target="end_ok">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Task Path (reference)" id="task-path-2">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1520" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================= TITLE ================= -->
+        <mxCell id="title" value="Agentic task path: task from phone to deployed code" style="text;html=1;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="760" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ================= LEGEND (top-right) ================= -->
+        <mxCell id="legend_box" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontFamily=Helvetica;dashed=1;dashPattern=6 4;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="20" width="350" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_title" value="Legend" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="26" width="120" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_frame" value="Dashed frame = trust boundary (one OS user)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="50" width="330" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_box" value="Solid rounded box = service (a program)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="72" width="330" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_cyl" value="Cylinder = data store (durable queue on disk)" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="94" width="330" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_dia" value="Diamond = decision  /  [x] = branch condition" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="116" width="330" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_arrow" value="Arrow points from initiator to resource" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="138" width="330" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= SWIMLANES (trust boundaries) ================= -->
+        <mxCell id="lane1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;dashPattern=6 4;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="1460" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="lane1_lbl" value="Owner phone (Telegram)" style="text;html=1;align=left;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="52" y="206" width="190" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lane2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;dashPattern=6 4;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="350" width="1460" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="lane2_lbl" value="Transport bot (no keys, no code access)" style="text;html=1;align=left;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="356" width="290" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lane3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;dashPattern=6 4;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="500" width="1460" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="lane3_lbl" value="Coding worker (Claude Code)" style="text;html=1;align=left;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="506" width="240" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="lane4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;dashed=1;dashPattern=6 4;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="40" y="660" width="1460" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="lane4_lbl" value="Host: git + systemd ($VPS_HOST, ${AIOS_HOME})" style="text;html=1;align=left;verticalAlign=top;fontSize=12;fontStyle=1;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="666" width="340" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= LANE 1 NODES ================= -->
+        <mxCell id="start" value="" style="shape=startState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="80" y="255" width="30" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_send" value="Send task&#10;(coding request in Telegram)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="160" y="240" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_ask" value="Owner gets Allow / Deny buttons" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="700" y="240" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_confirm" value="Owner gets result summary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="240" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="end_ok" value="" style="shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="255" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="end_ok_lbl" value="Delivered" style="text;html=1;align=center;verticalAlign=top;fontSize=11;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="288" width="90" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= LANE 2 NODES ================= -->
+        <mxCell id="b_transport" value="Transport bot&#10;verifies owner, enqueues task" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="160" y="390" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="queue" value="Durable queue&#10;(survives restart)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="430" y="378" width="110" height="84" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rh_policy" value="Policy gateway:&#10;allowlisted and approved?" style="rhombus;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="610" y="360" width="180" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_reject" value="Notify owner of rejection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="390" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="end_rej" value="" style="shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="405" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="end_rej_lbl" value="Rejected" style="text;html=1;align=center;verticalAlign=top;fontSize=11;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="438" width="90" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= LANE 3 NODES ================= -->
+        <mxCell id="b_worker" value="Coding worker&#10;claims task, edits code, runs tests" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="160" y="545" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rh_risky" value="Mid-session gate:&#10;risky tool call?" style="rhombus;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="610" y="515" width="180" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_commit" value="Commit and push&#10;(scoped repo token)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="545" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_abort" value="Abort task, nothing pushed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="545" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="end_abort" value="" style="shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1325" y="620" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="end_abort_lbl" value="Aborted" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1365" y="626" width="90" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= LANE 4 NODES ================= -->
+        <mxCell id="b_sync" value="Git sync on host&#10;git pull --ff-only" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="700" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="rh_compile" value="Compile gate:&#10;py_compile passes?" style="rhombus;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=12;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="610" y="670" width="180" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_restart" value="Systemd restart&#10;(new version starts)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="330" y="700" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_keepold" value="Keep old version, alert owner" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontColor=#000000;fontSize=13;fontStyle=1;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="900" y="795" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="end_fail" value="" style="shape=endState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="1150" y="805" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="end_fail_lbl" value="Old version kept" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#000000;fillColor=none;strokeColor=none;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="811" width="120" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ================= EDGES ================= -->
+        <!-- start -> send -->
+        <mxCell id="e_start_send" value="opens chat" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="start" target="b_send">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- send -> transport (straight down, x=260) -->
+        <mxCell id="e_send_transport" value="sends message" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_send" target="b_transport">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- transport -> queue -->
+        <mxCell id="e_transport_queue" value="enqueues task" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_transport" target="queue">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- queue -> policy -->
+        <mxCell id="e_queue_policy" value="reads task" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="queue" target="rh_policy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- policy [rejected] -> reject -->
+        <mxCell id="e_policy_reject" value="[rejected]" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_policy" target="b_reject">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_reject_end" value="done" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_reject" target="end_rej">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- policy [approved] -> worker (straight down, x=700) -->
+        <mxCell id="e_policy_worker" value="[approved]" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_policy" target="b_worker">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="520" />
+              <mxPoint x="260" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- worker -> risky gate -->
+        <mxCell id="e_worker_risky" value="each tool call" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_worker" target="rh_risky">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- risky [yes] -> ask owner (up, x=790 riser) -->
+        <mxCell id="e_risky_ask" value="[yes] asks owner" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_risky" target="b_ask">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="545" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ask [allow] -> worker (down-left, x=620 riser to worker top) -->
+        <mxCell id="e_ask_allow" value="[allow] resume" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_ask" target="b_worker">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="750" y="330" />
+              <mxPoint x="120" y="330" />
+              <mxPoint x="120" y="575" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ask [deny] -> abort (right, x=1340 down) -->
+        <mxCell id="e_ask_deny" value="[deny / timeout]" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_ask" target="b_abort">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="850" y="215" />
+              <mxPoint x="1340" y="215" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_abort_end" value="done" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_abort" target="end_abort">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- risky [no] -> commit -->
+        <mxCell id="e_risky_commit" value="[no] safe" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_risky" target="b_commit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- commit -> sync (straight down, x=1000) -->
+        <mxCell id="e_commit_sync" value="pushes branch" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_commit" target="b_sync">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- sync -> compile gate (left, same Y=730) -->
+        <mxCell id="e_sync_compile" value="new HEAD" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_sync" target="rh_compile">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- compile [pass] -> restart (left, same Y=730) -->
+        <mxCell id="e_compile_restart" value="[py_compile ok]" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_compile" target="b_restart">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- compile [fail] -> keep old (down then right, x=700 riser) -->
+        <mxCell id="e_compile_fail" value="[fail]" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="rh_compile" target="b_keepold">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_keepold_end" value="done" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_keepold" target="end_fail">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- restart -> confirm (up to lane1, riser at x=430) -->
+        <mxCell id="e_restart_confirm" value="restarted, notifies owner" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_restart" target="b_confirm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="430" y="160" />
+              <mxPoint x="1100" y="160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- confirm -> end_ok -->
+        <mxCell id="e_confirm_end" value="delivered" style="endArrow=classic;html=1;edgeStyle=orthogonalEdgeStyle;strokeColor=#000000;strokeWidth=1;fontFamily=Helvetica;fontColor=#000000;fontSize=11;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="b_confirm" target="end_ok">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
