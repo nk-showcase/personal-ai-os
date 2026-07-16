@@ -7,14 +7,15 @@ through the durable queue (`task_queue`), NOT through an in-process
 `asyncio.Future`.
 
 Boundaries of this layer:
-  - The live `/bridge` and Telegram transport are NOT switched over here; that
-    is a separate wiring step.
   - This module does NOT modify `bot/main.py`, `bot/handlers.py`, or
     `bot/claude_bridge.py`.
-  - `default_executor` is the real boundary to `claude_bridge._run_claude`, but
-    it is NOT wired in yet (no repo, no bot, no caller). Calling it without full
-    wiring deliberately raises NotImplementedError, so that nothing real runs by
-    accident and no queue approval is silently ignored.
+  - The real production executor is `bot/claude_worker._claude_executor`: it
+    receives the queue-backed `approve` built here (make_queue_approver +
+    make_approval_notifier) and passes it into `claude_bridge._run_claude`,
+    where it becomes the can_use_tool approval gate.
+  - `default_executor` below is a deliberate test boundary, not the production
+    path. Calling it without full wiring raises NotImplementedError, so that
+    nothing real runs by accident and no queue approval is silently ignored.
 
 Side-effect-free import: only imports and constants. `claude_bridge` is imported
 LAZILY inside `default_executor`, so unit tests need no Telegram/Claude
@@ -61,6 +62,29 @@ def resolve_mode(mode) -> ModeSpec:
     return ModeSpec(read_only=True, is_continue=False)
 
 
+def make_approval_notifier(chat_id, task_id):
+    """on_request hook for make_queue_approver: proactively deliver the Allow/Deny card to
+    the operator through reply_queue (the transport sends it to the chat within ~2s; the tap
+    is handled by the existing bridge:approve handler). The danger reason comes from
+    tool_input['_reason'] — the gate puts it there for the card; a delivery failure does not
+    break approve(): without the card the operator can still open the request via
+    /bridge approvals."""
+    def notify(approval_id, tool_name, tool_input):
+        if not chat_id:
+            return
+        try:
+            from . import bridge_queue, reply_queue
+            ti = dict(tool_input or {})
+            reason = str(ti.pop("_reason", "") or "")
+            card = bridge_queue.approval_card(approval_id, task_id, tool_name, ti, reason=reason)
+            reply_queue.enqueue_reply_kb(int(chat_id), card["text"], card["keyboard"],
+                                         source="claude-worker")
+        except Exception as e:  # noqa: BLE001 — the card must not break the approve loop itself
+            log.warning("runner: approval card enqueue failed (%s) — operator can use /bridge approvals",
+                        type(e).__name__)
+    return notify
+
+
 def make_queue_approver(
     task_id,
     *,
@@ -68,6 +92,7 @@ def make_queue_approver(
     poll_interval=DEFAULT_APPROVAL_POLL_S,
     queue=task_queue,
     sleep=asyncio.sleep,
+    on_request=None,
 ):
     """Return an async approve(tool_name, tool_input) -> bool backed by the durable queue.
 
@@ -75,9 +100,16 @@ def make_queue_approver(
     verdict (`get_verdict`) until it arrives or the timeout elapses. Timeout ->
     safe deny (False). NO asyncio.Future across the process boundary — only rows
     in SQLite.
+    on_request(approval_id, tool_name, tool_input) is an optional "request created"
+    hook (the proactive operator card); its failure does not affect the approval loop.
     """
     async def approve(tool_name, tool_input) -> bool:
         approval_id = queue.request_approval(task_id, tool_name, tool_input)
+        if on_request is not None:
+            try:
+                on_request(approval_id, tool_name, tool_input)
+            except Exception as e:  # noqa: BLE001
+                log.warning("runner: on_request hook failed (%s)", type(e).__name__)
         deadline = time.monotonic() + float(timeout)
         while True:
             verdict = queue.get_verdict(approval_id)
@@ -115,7 +147,8 @@ async def run_queue_task(
     """
     spec = resolve_mode(task.get("mode"))
     approve = approver_factory(
-        task["id"], timeout=approval_timeout, poll_interval=approval_poll, queue=queue
+        task["id"], timeout=approval_timeout, poll_interval=approval_poll, queue=queue,
+        on_request=make_approval_notifier(task.get("chat_id"), task["id"]),
     )
     return await executor(
         task=task,
@@ -151,24 +184,20 @@ async def default_executor(
     *, task, read_only, is_continue, resume_session_id, approve, repo=None, bot=None,
     design_mode=False
 ):
-    """Real boundary to claude_bridge._run_claude. NOT wired in yet.
+    """Test boundary to claude_bridge._run_claude — NOT the production path.
 
-    When the transport/bridge are connected, a prepared `repo` and an approval
-    delivery channel arrive here; only then does `claude_bridge._run_claude` run.
-    Until then, a deliberate NotImplementedError prevents accidentally launching a
-    real Claude process and ignoring a queue approval.
+    The production executor is `bot/claude_worker._claude_executor`, which prepares
+    the repo and passes `approve` into `_run_claude` (the can_use_tool gate). This
+    fallback exists so unit tests have an explicit boundary: calling it without a
+    prepared repo raises NotImplementedError instead of accidentally launching a
+    real coding-agent process and ignoring a queue approval.
     """
     if repo is None or bot is None:
         raise NotImplementedError(
-            "default_executor: real execution wiring (repo prep + routing queue "
-            "approvals into claude_bridge._run_claude) lands in the /bridge-switch "
-            "step. Unit tests must inject a fake executor."
+            "default_executor: this is a test boundary; the production wiring "
+            "(repo prep + queue approvals into claude_bridge._run_claude) lives in "
+            "bot/claude_worker._claude_executor. Unit tests must inject a fake executor."
         )
-    # --- Bridge-switch wiring point (NOT executed until wired in) ---
-    # NOTE: routing `approve` (queue approval) into _run_claude requires editing
-    # claude_bridge.py (which currently approves in-process through the bot). That
-    # is the separate bridge-switch step. The lazy import keeps unit tests free of
-    # Telegram/Claude dependencies.
     from . import claude_bridge_worker as claude_bridge  # noqa: PLC0415  (lazy by design)
 
     return await claude_bridge._run_claude(
@@ -179,4 +208,5 @@ async def default_executor(
         read_only,
         design_mode=design_mode,
         resume_session_id=resume_session_id,
+        approve=approve,
     )

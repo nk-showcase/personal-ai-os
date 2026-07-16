@@ -1,4 +1,4 @@
-"""ChatBot shell: unified menu, routing, and feature module registry."""
+"""Bot shell: unified menu, routing, and feature module registry."""
 
 from telegram import ReplyKeyboardMarkup
 

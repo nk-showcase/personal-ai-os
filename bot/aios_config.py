@@ -98,23 +98,6 @@ def set_store_mode(domain: str, value: str) -> None:
     _validated_set(f"store_mode.{domain}", value, STORE_MODE_VALUES)
 
 
-# ---- Gate 0 / Part B: worker sends personal views directly to Telegram --------------------
-# 'on' ONLY after the operator's button grants TELEGRAM_BOT_TOKEN to the keyed worker.
-# 'off' (default) = today's behavior (views transit the queue to the transport).
-KEY_WORKER_SENDS_VIEWS = "worker_sends.views"
-WORKER_SENDS_VALUES = ("off", "on")
-WORKER_SENDS_DEFAULT = "off"
-
-
-def get_worker_sends_views() -> str:
-    return _safe_get(KEY_WORKER_SENDS_VIEWS, WORKER_SENDS_VALUES, WORKER_SENDS_DEFAULT)
-
-
-def set_worker_sends_views(value: str) -> None:
-    """Explicit operator-gated flip (the token-grant ceremony button)."""
-    _validated_set(KEY_WORKER_SENDS_VIEWS, value, WORKER_SENDS_VALUES)
-
-
 # ---- Claude chat: durable "current chat" pointer -----------------------------------------
 # A NON-personal pointer to the active Claude-chat page: just a page id
 # (e.g. 'local-<uuid>') — no title, no message text. It lives in the non-encrypted app_config

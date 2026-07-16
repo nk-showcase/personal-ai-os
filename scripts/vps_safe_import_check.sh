@@ -3,7 +3,7 @@
 # SAFE: dummy values only, does NOT start the bot, does not read/print real secrets.
 # Run on the server:  bash scripts/vps_safe_import_check.sh
 set -u
-REPO="${REPO:-${AIOS_HOME}/apps/ChatBot}"
+REPO="${REPO:-${AIOS_HOME}/apps/app}"
 PY="$REPO/.venv/bin/python"
 [ -x "$PY" ] || { echo "FAIL: venv python not found ($PY)"; exit 1; }
 cd "$REPO" || { echo "FAIL: no $REPO"; exit 2; }

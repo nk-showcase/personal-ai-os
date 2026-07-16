@@ -6,7 +6,7 @@ sends the exact three replies keyed on TOO_LONG / truthy rel_path / None; and em
 unconditional preflight log line on every call (even fall-through).
 
 Platform: the project venv (py3.12) — importing bot.handlers pulls telegram + config.
-Run:  cd ${AIOS_HOME}/apps/ChatBot && PYTHONPATH=. .venv/bin/python scripts/test_s6_crit_a_preflight.py
+Run:  cd ${AIOS_HOME}/apps/app && PYTHONPATH=. .venv/bin/python scripts/test_s6_crit_a_preflight.py
 
 Offline + key-free: submit_pc_task + is_pc_task are stubbed; no git/network/GitHub token.
 """

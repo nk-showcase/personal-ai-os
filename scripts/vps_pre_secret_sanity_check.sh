@@ -3,7 +3,7 @@
 # SAFE: does not read secrets, does not print values. Only verifies environment readiness.
 # Run on the VPS:  bash scripts/vps_pre_secret_sanity_check.sh
 set -u
-REPO="${REPO:-$HOME/apps/ai-os}"
+REPO="${REPO:-$HOME/apps/app}"
 fail=0
 ok(){ echo "PASS: $1"; }
 bad(){ echo "FAIL: $1"; fail=1; }

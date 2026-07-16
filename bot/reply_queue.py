@@ -127,9 +127,10 @@ def enqueue_reply_kb(chat_id: int, text: str, inline_keyboard: list, source: str
 
     inline_keyboard is a list of button ROWS, each row a list of {"text": ..., "callback_data": ...}
     dicts — plain JSON, so this module imports NO telegram type; the transport rebuilds the
-    InlineKeyboardMarkup from markup_json at send time. INERT in this slice: nothing live calls this.
-    The transport delivers it via deliver_pending's send_kb_fn; with no send_kb_fn a KB row is left
-    UNDELIVERED (never mis-sent as a plain text send). Returns reply id."""
+    InlineKeyboardMarkup from markup_json at send time. Live caller: the coding worker's approval
+    card (bot/claude_worker_runner.make_approval_notifier). The transport delivers it via
+    deliver_pending's send_kb_fn; with no send_kb_fn a KB row is left UNDELIVERED (never mis-sent
+    as a plain text send). Returns reply id."""
     return _enqueue(chat_id, text, source, KIND_SEND_KB, None, json.dumps(inline_keyboard, ensure_ascii=False))
 
 

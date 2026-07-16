@@ -11,9 +11,9 @@
 ## 1. Create 3 projects
 | Project | Purpose |
 |---|---|
-| `chatbot-telegram` | Telegram bot secret |
-| `chatbot-claude-worker` | coder secrets |
-| `chatbot-integrations` | mail/notes/tasks secrets |
+| `aios-telegram-bot` | Telegram bot secret |
+| `aios-claude-worker` | coder secrets |
+| `aios-integrations` | mail/notes/tasks secrets |
 
 ## 2. Create 3 machine accounts
 `telegram-bot`, `claude-worker`, `integrations-worker` — one per service.
@@ -23,9 +23,9 @@ Do NOT create a temporary 4th / "monolithic" machine account — the target path
 ## 3. Create secrets (names from `config/secrets-map.yaml`), sorted into projects
 | Project | Secrets (names) |
 |---|---|
-| `chatbot-telegram` | `TELEGRAM_BOT_TOKEN` |
-| `chatbot-claude-worker` | `GITHUB_REPO_WRITE_TOKEN`, `ANTHROPIC_API_KEY` |
-| `chatbot-integrations` | `NOTION_API_KEY`, `TODOIST_API_KEY` |
+| `aios-telegram-bot` | `TELEGRAM_BOT_TOKEN` |
+| `aios-claude-worker` | `GITHUB_REPO_WRITE_TOKEN`, `ANTHROPIC_API_KEY` |
+| `aios-integrations` | `NOTION_API_KEY`, `TODOIST_API_KEY` |
 
 Values are entered **only in the Bitwarden window** and **as each token is rotated** — not necessarily all at once. A secret's name+value is created at the moment that token is actually reissued. (For a name-only inventory, see 7a.)
 
@@ -33,9 +33,9 @@ Values are entered **only in the Bitwarden window** and **as each token is rotat
 
 ## 4. Grant access (each robot gets only its own folder)
 Machine account -> **Projects** tab -> add **one** project -> permission **Can read**:
-- `telegram-bot` -> `chatbot-telegram` · Can read
-- `claude-worker` -> `chatbot-claude-worker` · Can read
-- `integrations-worker` -> `chatbot-integrations` · Can read
+- `telegram-bot` -> `aios-telegram-bot` · Can read
+- `claude-worker` -> `aios-claude-worker` · Can read
+- `integrations-worker` -> `aios-integrations` · Can read
 
 No robot gets more than one folder (least privilege, as in `secrets-map.yaml`). **Verify live — see 7.**
 
@@ -68,7 +68,7 @@ No robot gets more than one folder (least privilege, as in `secrets-map.yaml`). 
 
 ## 7. Check: a robot sees ONLY its own secrets
 - **In the window (the operator does this):** machine account -> **Projects** tab -> exactly **one** project with `Can read`, the other two absent. Same for all three.
-- **Live check (no token printed):** using each robot's access token, request the **project** list (`bws project list` — it does not return secret values). Expected result: each token sees exactly its one project (`telegram-bot -> chatbot-telegram`, `claude-worker -> chatbot-claude-worker`, `integrations-worker -> chatbot-integrations`). Tokens and values never reach chat/log.
+- **Live check (no token printed):** using each robot's access token, request the **project** list (`bws project list` — it does not return secret values). Expected result: each token sees exactly its one project (`telegram-bot -> aios-telegram-bot`, `claude-worker -> aios-claude-worker`, `integrations-worker -> aios-integrations`). Tokens and values never reach chat/log.
 
 ## 7a. Secret inventory by name (present/missing)
 - **Tool limitation:** `bws` version 2.1.0 has NO "names only" mode. `bws secret list` in every output format (json/yaml/env/table/tsv) includes the secret **value**. So you cannot list secret NAMES without simultaneously reading their VALUES through the standard command.
@@ -92,10 +92,10 @@ Do NOT leave it empty (empty value = the same `ValueError`). Presence check by n
 
 Before starting the bot you must fill the secret values in Bitwarden (as tokens rotate) and then enable the services. The `bot/secrets_loader.py` layer safely tolerates missing values (see docs/security/secrets-management.md).
 
-## 9. Future: context encryption key (do NOT create during initial setup)
-- Placeholder name of the future secret: `CONTEXT_STORE_IDENTITY` (aka `CONTEXT_KDB_MASTER_KEY`) — the private decryption identity of the future encrypted context store (KDB).
-- **Not created now** — it is only a reserved name (`config/secrets-map.yaml` -> `planned_future`). The KDB is not built during initial setup.
-- When implementation starts: put it in the `chatbot-claude-worker` project and grant access ONLY to the `claude-worker` machine account (reuse the existing one, without a paid 4th account). The `telegram-bot` machine account is never given the decryption key.
+## 9. Context encryption key (do NOT create in Bitwarden — ever)
+- Name: `CONTEXT_STORE_IDENTITY` (aka `CONTEXT_KDB_MASTER_KEY`) — the private decryption identity of the encrypted context store (implemented: `bot/context_store.py`).
+- **Never a Bitwarden secret, by design.** The final custody decision (see `docs/security/adr-encryption-notion-migration.md`, which supersedes the earlier plan to reuse a machine account) keeps the working master key as an **on-disk mode-0600 age identity file** held by the keyed worker; the offline recovery key stays air-gapped with the operator. The name stays reserved in `config/secrets-map.yaml` only to state the boundary.
+- The `telegram-bot` machine account is never given the decryption key.
 
 ---
 Sources: [Machine Accounts](https://bitwarden.com/help/machine-accounts/) · [Access Tokens](https://bitwarden.com/help/access-tokens/) · [Secrets Manager Quick Start](https://bitwarden.com/help/secrets-manager-quick-start/) · [Secrets Manager Plans](https://bitwarden.com/help/secrets-manager-plans/) · [Secrets Manager CLI (bws)](https://bitwarden.com/help/secrets-manager-cli/)

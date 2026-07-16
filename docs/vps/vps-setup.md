@@ -20,7 +20,7 @@
 - A secrets-manager CLI/SDK (to fetch secrets via a machine account).
 
 ## Lay out
-- Repository: clone into `${AIOS_HOME}/apps/ChatBot` (working tree). Virtualenv at `${AIOS_HOME}/apps/ChatBot/.venv`. This path matches the `REPO=$HOME/apps/ChatBot` default used by every `scripts/vps_*.sh`, the `EnvironmentFile` in the systemd units, and the actual deploy — one path, not `/opt/ai-os/repo`.
+- Repository: clone into `${AIOS_HOME}/apps/app` (working tree). Virtualenv at `${AIOS_HOME}/apps/app/.venv`. This path matches the `REPO=$HOME/apps/app` default used by every `scripts/vps_*.sh`, the `EnvironmentFile` in the systemd units, and the actual deploy — one path, not `/opt/ai-os/repo`.
 - `~/.claude/skills`, `~/.claude/hooks`, `~/.claude/settings.json` — symlinks into the repo (see auto-sync-rules.md).
 - `~/.claude/.credentials.json` — Claude Code credentials, local-only, readable only by the service user.
 - systemd services (see `systemd/`), enabled only at the migration step that turns them on.

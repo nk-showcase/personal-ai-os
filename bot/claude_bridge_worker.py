@@ -429,6 +429,40 @@ async def _auto_push(repo, task: str) -> tuple[bool, str]:
         return False, ""
 
 
+def make_gated_can_use_tool(approve):
+    """The SDK's can_use_tool callback on top of the durable approval queue (human-in-the-loop).
+
+    approve — async (tool_name, tool_input) -> bool (make_queue_approver). Routine actions are
+    allowed instantly; a dangerous action (claude_policy.approval_reason) waits for the operator's
+    Allow/Deny, and a queue timeout is a safe "no". An error inside the policy itself -> deny
+    (fail-closed, never open-fail). Module-level so it is testable without launching a real
+    coding-agent session."""
+    async def _gated_can_use_tool(tool_name, tool_input, context):  # type: ignore[no-untyped-def]
+        from claude_agent_sdk import PermissionResultAllow, PermissionResultDeny
+        try:
+            reason = claude_policy.approval_reason(tool_name, tool_input or {})
+        except Exception as _pe:  # noqa: BLE001 — a broken policy must not open-fail
+            logger.warning("approval policy error (%s) -> deny %s", type(_pe).__name__, tool_name)
+            return PermissionResultDeny(
+                message="The approval gate could not evaluate this action — it was denied.")
+        if reason is None:
+            return PermissionResultAllow()
+        logger.info("approval gate: %s requires operator approval (%s)", tool_name, reason)
+        ti = dict(tool_input or {})
+        ti["_reason"] = reason  # reason for the operator's card (make_approval_notifier pops it)
+        ok = await approve(tool_name, ti)
+        if ok:
+            return PermissionResultAllow()
+        return PermissionResultDeny(
+            message=(f"The operator denied this action (or did not answer within 5 minutes): {reason}. "
+                     "The action was NOT executed. Continue the task without it; if it is truly "
+                     "required, finish up and explain to the operator what needs manual approval."),
+            interrupt=False,
+        )
+
+    return _gated_can_use_tool
+
+
 async def _run_claude(
     repo: Path,
     task: str,
@@ -438,6 +472,7 @@ async def _run_claude(
     design_mode: bool = False,
     resume_session_id: str | None = None,
     progress_sink: list | None = None,
+    approve=None,
 ) -> tuple[str, list[str], str | None, list[str]]:
     """Run a Claude Code session via claude-agent-sdk.
 
@@ -447,6 +482,12 @@ async def _run_claude(
     is the list of file paths Write/Edit/MultiEdit/NotebookEdit touched during
     the run — captured via PostToolUse hook so the bridge can surface "saved
     locally" info even when no git commit happened.
+
+    approve — async (tool_name, tool_input) -> bool from make_queue_approver: the operator's
+    durable approval queue. When claude_policy.tool_approvals_enabled() and approve is given,
+    the can_use_tool gate (human-in-the-loop) is wired in: DANGEROUS actions
+    (claude_policy.approval_reason) wait for the operator's Allow/Deny on the phone; routine
+    work is allowed by the callback instantly. A queue timeout is a safe "no".
     """
     try:
         from claude_agent_sdk import query, ClaudeAgentOptions, HookMatcher
@@ -492,10 +533,18 @@ async def _run_claude(
         "append": append_text,
     }
 
+    # Human-in-the-loop: the can_use_tool gate for DANGEROUS actions. Routine work (code
+    # edits, ordinary commands) is allowed by the callback instantly — the "coding from a
+    # phone without endless Allow/Deny" policy is preserved; only the list in
+    # docs/security/approval-policy.md prompts. Kill-switch: AIOS_TOOL_APPROVALS=0.
+    _gate_active = claude_policy.tool_approvals_enabled() and approve is not None
+    _gated_can_use_tool = make_gated_can_use_tool(approve) if _gate_active else None
+
     opts_kwargs: dict = dict(
         cwd=str(repo),
-        # Permission mode is resolved by policy (configurable via AIOS_CLAUDE_PERMISSION_MODE).
-        # See bot/claude_policy.py and docs/security/approval-policy.md.
+        # With the gate enabled, permission_mode='default' — permission requests go to
+        # _gated_can_use_tool; with the gate disabled — the old no-confirm bypassPermissions
+        # policy (see bot/claude_policy.py and docs/security/approval-policy.md).
         permission_mode=claude_policy.resolve_claude_permission_mode(),
         model=_BRIDGE_MODEL,
         effort=_BRIDGE_EFFORT,
@@ -509,6 +558,12 @@ async def _run_claude(
         # SDK without the field is handled by the TypeError fallback below (skills stripped).
         skills="all",
         stderr=_stderr_cb,
+        # CAUTION (human-in-the-loop): the presence of hooks (or MCP servers) is what makes
+        # SDK 0.1.64 keep stdin open for the whole run (wait_for_result_and_end_input), which
+        # is what lets can_use_tool travel out for the operator's Allow/Deny. If this
+        # PostToolUse hook is ever removed, do NOT silently keep the gate: without open stdin
+        # the streaming input closes after the first message and approvals stop firing. Keep
+        # the hook (or another source of the bidirectional protocol).
         hooks={"PostToolUse": [HookMatcher(hooks=[_track_edits])]},
     )
     if resume_session_id:
@@ -517,6 +572,8 @@ async def _run_claude(
         opts_kwargs["max_turns"] = _BRIDGE_MAX_TURNS
     if allowed_tools is not None:
         opts_kwargs["allowed_tools"] = allowed_tools
+    if _gate_active:
+        opts_kwargs["can_use_tool"] = _gated_can_use_tool
 
     # Block -1A: log a SECRET-REDACTED, truncated task for diagnostics — never the
     # raw text. `_task_log_repr` runs the shared scrubber before truncating, so a
@@ -531,11 +588,33 @@ async def _run_claude(
         options = ClaudeAgentOptions(**opts_kwargs)
     except TypeError as e:
         logger.warning("ClaudeAgentOptions rejected fields, stripping: %s", e)
+        if "can_use_tool" in opts_kwargs:
+            # The approval gate is impossible on this SDK — do NOT run without the
+            # human-in-the-loop silently: a loud refusal instead of a quiet open pass
+            # (fail-closed).
+            raise RuntimeError(
+                "claude-agent-sdk without can_use_tool support — the approval gate "
+                "cannot run; upgrade the SDK or set AIOS_TOOL_APPROVALS=0"
+            ) from e
         for key in ("skills", "setting_sources", "stderr", "thinking", "effort", "system_prompt", "max_turns", "hooks"):
             opts_kwargs.pop(key, None)
         options = ClaudeAgentOptions(**opts_kwargs)
 
-    prompt_input = task
+    if _gate_active:
+        # can_use_tool requires STREAMING input (SDK 0.1.64 raises ValueError on a str prompt).
+        # Yield exactly the same message the SDK itself writes for a string prompt
+        # (_internal/client.py: type=user + message{role,content}) — behaviour is identical.
+        async def _prompt_stream():
+            yield {
+                "type": "user",
+                "session_id": "",
+                "message": {"role": "user", "content": task},
+                "parent_tool_use_id": None,
+            }
+
+        prompt_input = _prompt_stream()
+    else:
+        prompt_input = task
 
     # Resolve the owner's Claude login (Max-subscription OAuth token) from the secret
     # manager (Bitwarden) BY NAME and place it in env so the CLI subprocess authenticates

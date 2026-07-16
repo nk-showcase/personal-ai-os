@@ -1,7 +1,11 @@
 # Design: Encryption at-rest (scheme 3) + encrypted Notion→VPS migration — FINAL
 
-> Status: **Proposed** (design-only). No code written, no state changed.
-> Scope: the AI OS bot in `${AIOS_HOME}/apps/ai-os`.
+> Status: **Accepted and implemented.** The store core ships in this tree (`bot/context_store.py`,
+> `bot/context_key.py`, `bot/context_cipher.py`, tests under `scripts/test_context_*.py`), and the
+> production deployment runs with encryption enabled for every personal domain. The body below is
+> the point-in-time design record and is kept as written — statements like "does not exist yet"
+> describe the codebase at decision time, not the current tree.
+> Scope: the AI OS bot in `${AIOS_HOME}/apps/app`.
 > Locked decisions are fixed inputs, designed around, never re-litigated.
 > This revision incorporates two adversarial review passes (key-loss-and-recovery; partial-migration-corruption; key-leak-and-boundary-break). Every load-bearing code fact below was re-verified against the repo before finalizing (citations inline). The single unifying theme of the rejected-draft weaknesses: **recovery and durability were RECORDED but never PROVEN, and the boundary was defined on the key rather than on the plaintext.** Both are now closed as enforced barriers.
 
@@ -11,7 +15,7 @@
 
 ## Status
 
-**Proposed.** Supersedes the placeholder in `config/secrets-map.yaml` (`planned_future.CONTEXT_STORE_IDENTITY`, lines 60–67) on one point: the working master key is an **on-disk `0600` age identity file**, *not* a machine-account secret-manager secret. This correction is forced by the locked decision and confirmed against `SECURITY.md` §4 ("the encryption master key and the age identity are 'never' class secrets: not in git, not in the secret manager; the working key is a local `0600` file").
+**Accepted and implemented** (see the status note at the top). Supersedes the placeholder in `config/secrets-map.yaml` (`planned_future.CONTEXT_STORE_IDENTITY`, lines 60–67) on one point: the working master key is an **on-disk `0600` age identity file**, *not* a machine-account secret-manager secret. This correction is forced by the locked decision and confirmed against `SECURITY.md` §4 ("the encryption master key and the age identity are 'never' class secrets: not in git, not in the secret manager; the working key is a local `0600` file").
 
 ## Context
 

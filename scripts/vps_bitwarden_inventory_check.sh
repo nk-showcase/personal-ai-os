@@ -18,7 +18,7 @@
 # Does NOT start the bot, touch systemd, or change permissions/files.
 set -u
 
-REPO="${REPO:-$HOME/apps/ai-os}"
+REPO="${REPO:-$HOME/apps/app}"
 MAP="$REPO/config/secrets-map.yaml"
 ENV_DIR="${AIOS_ENV_DIR:-$HOME/.ai-os/env}"
 BWS="${BWS_BIN:-$HOME/.local/bin/bws}"
@@ -33,9 +33,9 @@ esac
 
 # service -> project (as in docs/security/bitwarden-setup-checklist.md)
 declare -A PROJECT=(
-  [telegram-bot]=chatbot-telegram
-  [claude-worker]=chatbot-claude-worker
-  [integrations-worker]=chatbot-integrations
+  [telegram-bot]=aios-telegram-bot
+  [claude-worker]=aios-claude-worker
+  [integrations-worker]=aios-integrations
 )
 SERVICES="telegram-bot claude-worker integrations-worker"
 

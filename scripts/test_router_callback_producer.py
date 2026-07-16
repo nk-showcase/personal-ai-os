@@ -5,7 +5,7 @@ build the exact kind='callback' envelope, and enqueue an alias='router' row.
 
 Platform: the project venv (py3.12) — route_callback imports bot.config (router_encrypt_enabled) and
 bot.handlers.is_authorized (-> telegram). Run:
-  cd ~/apps/ChatBot && PYTHONPATH=. .venv/bin/python scripts/test_router_callback_producer.py
+  cd ~/apps/app && PYTHONPATH=. .venv/bin/python scripts/test_router_callback_producer.py
 
 Offline + key-free: temp queue DB, dummy non-secret token env, encryption OFF (the ON branch is proven
 with a STUBBED seal — a real age round-trip stays in test_router_seal.py on the mac).

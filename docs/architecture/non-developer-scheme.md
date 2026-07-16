@@ -28,14 +28,16 @@ helper — that is the VPS. A home PC is not suitable: it gets switched off.
 So you are not interrupted over every small thing. Routine work (editing, saving to the working
 folder) proceeds on its own. Confirmation is requested only where an action could do real harm.
 
-## What should ask for confirmation (target design)
-This is the intended policy. In the shipped default the per-action Allow/Deny prompt is turned off (the
-coding worker runs in a "don't ask" mode and the approval queue is not yet connected), so treat this as
-the design target, not an active guarantee.
-- Sending a message.
-- Writing to the project's "main" branch.
-- Deleting files/branches/data, rewriting history.
-- Changing keys/security settings.
+## What asks for confirmation
+When the coder wants to do something risky, a card with Allow/Deny buttons arrives on your phone.
+Nothing happens until you answer; if you do not answer within 5 minutes, the answer is "no" —
+the risky step is simply skipped and the coder tells you what it wanted. This prompt is on by
+default; routine coding almost never triggers it (the safety check errs on the cautious side, so
+now and then an ordinary command that just mentions the word "delete" can pop the card too).
+- Writing to the project's "main" branch, force-overwrites, rewriting history.
+- Deleting files/branches/data.
+- Downloading-and-running code from the internet, installing packages.
+- Sending data out, changing keys/security settings, touching server services.
 
 ## How this differs from a managed platform
 A managed platform is a "serviced rental apartment" that periodically restarts itself and wipes

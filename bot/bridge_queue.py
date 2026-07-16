@@ -110,6 +110,32 @@ def build_approval_callbacks(approval_id) -> dict:
     }
 
 
+def approval_card(approval_id, task_id, tool_name, tool_input, reason: str = "",
+                  timeout_min: int = 5) -> dict:
+    """Proactive approval card for the operator (telegram-free): text + inline-button rows
+    in the reply_queue.enqueue_reply_kb format. Same redact/truncate and the same
+    callback_data as pending_approval_view — the tap is handled by the transport's existing
+    bridge:approve handler."""
+    try:
+        rendered = json.dumps(tool_input, ensure_ascii=False, indent=2)
+    except (TypeError, ValueError):
+        rendered = str(tool_input)
+    rendered = _truncate(_redact(rendered))
+    cbs = build_approval_callbacks(approval_id)
+    lines = ["⚠️ The coding agent requests permission", f"Task #{task_id} · {tool_name}"]
+    if reason:
+        lines.append(f"Action: {reason}")
+    lines += ["", rendered, "",
+              f"No answer within {timeout_min} minutes — the action is denied automatically."]
+    return {
+        "text": "\n".join(lines),
+        "keyboard": [[
+            {"text": "Allow", "callback_data": cbs["allow"]},
+            {"text": "Deny", "callback_data": cbs["deny"]},
+        ]],
+    }
+
+
 def pending_approval_view(*, task_id=None, queue=task_queue):
     """The oldest pending approval as a telegram-free payload, or None."""
     ap = queue.poll_pending_approval(task_id=task_id)

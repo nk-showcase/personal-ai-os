@@ -104,8 +104,8 @@ async def _reply_poller_job(context):
     async def _send_kb(chat_id, text, keyboard):
         # keyboard: list of button ROWS, each a list of {"text":..., "callback_data":...} dicts
         # (the plain-JSON shape enqueue_reply_kb stores). Rebuild the InlineKeyboardMarkup here —
-        # the worker never imports a telegram type. No live enqueue_reply_kb caller yet, so until a
-        # keyboard-bearing job is migrated this branch never fires (plain-send behaviour byte-identical).
+        # the worker never imports a telegram type. This branch fires for the coding worker's
+        # approval card (make_approval_notifier -> enqueue_reply_kb) and any other KB-bearing reply.
         markup = InlineKeyboardMarkup(
             [[InlineKeyboardButton(**btn) for btn in row] for row in (keyboard or [])]
         )

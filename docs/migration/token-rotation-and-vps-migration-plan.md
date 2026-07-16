@@ -31,5 +31,5 @@
 - Do not put real tokens into chat/files.
 - Do not change the actual settings of the previous hosting or the Git host.
 - Do not enable systemd services without a command.
-- Do not introduce a temporary single process instead of V2, the `chatbot-runtime-v1` wrapper, or a temporary Bitwarden machine account "for the single process".
+- Do not introduce a temporary single process instead of V2, the `single-process-runtime-v1` wrapper, or a temporary Bitwarden machine account "for the single process".
 - Legacy previous-hosting entry points (`Procfile`/`Dockerfile` -> `bot.main`) are removed at step 12 — that is not the go-forward path.

@@ -2,7 +2,8 @@
 # Claude Code running on the server; its Claude login is a local-only file under ~/.claude
 # (not from the secret manager, not from env). This service does NOT need the Telegram token.
 # Pushes to a working branch run without confirmation; pushes to main and force-pushes require
-# confirmation and are enforced by the guard hooks (see docs/security/approval-policy.md).
+# the operator's Allow/Deny via the per-tool approval gate (bot/claude_policy.approval_reason +
+# make_gated_can_use_tool, enabled by default; see docs/security/approval-policy.md).
 [Unit]
 Description=AI OS - Claude Worker (coding executor)
 After=network-online.target aios-telegram-bot.service

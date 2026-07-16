@@ -21,9 +21,9 @@ the frames.
 **What it shows:** the life of one coding task, from a Telegram message on a phone to
 the bot restarting itself on the new code. Diamonds are gates: a policy check before
 work starts, a mid-session owner Allow/Deny prompt when the agent wants to do something
-risky, and a compile check before the new version is allowed to boot. The Allow/Deny
-gate is the target design; in the shipped default it is turned off (see the repo README
-§2/§4) - the compile gate and the policy check are the parts active by default.
+risky, and a compile check before the new version is allowed to boot. All three gates
+ship enabled by default: the Allow/Deny gate is fail-closed (no answer in 5 minutes =
+deny) with `AIOS_TOOL_APPROVALS=0` as the kill-switch (see the repo README §2/§4).
 
 ## secret-path
 
@@ -42,10 +42,13 @@ values never appear in code, logs, or git.
 **What it shows:** how personal free text is stored encrypted at rest. Each record
 gets its own fresh data key (DEK); the data key is wrapped by a master key (KEK),
 which itself lives on disk only age-encrypted. The private age identity is readable by
-the worker user only and is never stored beside the data. At-rest encryption is **off by default**
-(`AIOS_CONTEXT_ENCRYPTION=0`); with it off, note content is written as cleartext and this diagram
-does not apply. The fail-closed behaviour holds only **when encryption is enabled**: with the flag on,
-if the key is absent, reads and writes fail closed — the system refuses to fall back to plaintext.
+the worker user only and is never stored beside the data. At-rest encryption is gated by
+`AIOS_CONTEXT_ENCRYPTION`: **on in the production deployment** (every domain that stores personal
+free text writes encrypted); code default `0` so the tree imports and the test suite runs without
+provisioning production keys, and this diagram does not apply while the flag is off. The keyed
+worker's queue applier is fail-closed: with the flag off it refuses store operations (rather than
+serving them keyless), and with the flag on but the key absent, reads and writes fail closed — the
+system never falls back to plaintext on the queue path.
 
 ## Glossary
 

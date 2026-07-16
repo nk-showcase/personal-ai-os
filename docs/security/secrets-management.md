@@ -80,13 +80,13 @@ Least privilege from `config/secrets-map.yaml`, condensed into "what a service r
 
 | Service | Receives | Must NOT receive |
 |---|---|---|
-| `telegram-bot` | only `TELEGRAM_BOT_TOKEN` (+ the non-secret `TELEGRAM_OWNER_ID`) | agent credentials, `GITHUB_*`, `NOTION_API_KEY`, `TODOIST_API_KEY`, `ANTHROPIC_API_KEY`, the future `CONTEXT_STORE_IDENTITY` |
-| `claude-worker` | agent credentials (local-only file, NOT Bitwarden), `GITHUB_REPO_WRITE_TOKEN`, `ANTHROPIC_API_KEY` | `TELEGRAM_BOT_TOKEN`, `NOTION_API_KEY`, `TODOIST_API_KEY` |
-| `integrations-worker` | `NOTION_API_KEY`, `TODOIST_API_KEY` | agent credentials, `TELEGRAM_BOT_TOKEN`, `GITHUB_*` |
+| `telegram-bot` | only `TELEGRAM_BOT_TOKEN` (+ the non-secret `TELEGRAM_OWNER_ID`) | agent credentials, `GITHUB_*`, `NOTION_API_KEY`, `TODOIST_API_KEY`, `ANTHROPIC_API_KEY`, the context-store decryption identity (`CONTEXT_STORE_IDENTITY`) |
+| `claude-worker` | agent credentials (local-only file, NOT Bitwarden), `GITHUB_REPO_WRITE_TOKEN`, `ANTHROPIC_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN` (one-time sign-in) | `TELEGRAM_BOT_TOKEN`, `NOTION_API_KEY`, `TODOIST_API_KEY` |
+| `integrations-worker` | `NOTION_API_KEY`, `TODOIST_API_KEY`, `TELEGRAM_BOT_TOKEN` (it sends personal store views itself — by design, see SECURITY.md §6), `ANTHROPIC_API_KEY` (in-worker LLM calls) | agent credentials, `GITHUB_*` |
 | `sync` | nothing (only `git pull --ff-only`) | any secrets; in particular agent credentials and `TELEGRAM_BOT_TOKEN` |
 
-## Future context-encryption key (placeholder, not implemented here)
-A planned future encrypted context store is a separate, later track; the design currently exists only as a placeholder. Only the NAME of the future secret is reserved here, without a value and without an implementation:
-- Name (planned): `CONTEXT_STORE_IDENTITY` (semantically also `CONTEXT_KDB_MASTER_KEY`) — the private identity for decrypting context.
-- **Decryption boundary:** only the future context/claude-worker decrypts. `telegram-bot` **never** receives the decryption key (neither via env nor via Bitwarden access).
-- **Where it will live (planned):** reuse the existing Bitwarden machine account `claude-worker` (same trust domain), to avoid provisioning a paid 4th account. Not provisioned now.
+## Context-encryption key (implemented; deliberately NOT a secret-manager secret)
+The encrypted context store ships in this tree (`bot/context_store.py`, `bot/context_key.py`, `bot/context_cipher.py`) and runs enabled in the production deployment. Its master key is handled differently from every other secret — **by design it never enters the secret manager**:
+- The working master key is an **on-disk mode-0600 age identity file** held by the decrypting (keyed) worker; the offline recovery key stays air-gapped with the operator. See `docs/security/adr-encryption-notion-migration.md` (which supersedes the earlier "store it in Bitwarden" placeholder) and `docs/security/key-custody-model.md`.
+- The name `CONTEXT_STORE_IDENTITY` remains reserved in `config/secrets-map.yaml` only to state the boundary in the value-free map: it is a "never" class secret — not in git, not in Bitwarden, not in logs.
+- **Decryption boundary:** only the keyed worker decrypts. `telegram-bot` **never** receives the decryption key (neither via env nor via secret-manager access).

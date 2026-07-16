@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
-"""PreToolUse guard for the ChatBot project.
+"""PreToolUse context-injector (advisory, fail-open) for the AI OS project.
+
+NOTE: this is NOT an enforcement guard. It injects SECURITY.md into context and
+never blocks a tool call (see the fail-open note below). It is also NOT wired in
+this published tree — the `.claude/settings.json` that would register it as a
+PreToolUse hook is provisioned per deployment and is not included here (the repo
+ships no settings.json), so as published this file is inert. See
+`docs/security/guards-and-hooks.md`.
 
 Before any Edit/Write/MultiEdit in THIS repo, force the project's SECURITY.md
 (secret-hygiene rules) into the model's context and require an explicit
-acknowledgement that it was read in full. Travels with the repo via
-.claude/settings.json, so it fires on BOTH the Mac (Claude Code Desktop) and the
+acknowledgement that it was read in full. When wired via a deployment's
+`.claude/settings.json`, it fires on BOTH the Mac (Claude Code Desktop) and the
 VPS (where claude-worker runs Claude Code), interactive or headless.
 
 Design choices (deliberate):
@@ -89,7 +96,7 @@ def main():
             _out(ctx)
         else:
             _out(
-                "Reminder (ChatBot SECURITY gate): secret-hygiene rules from "
+                "Reminder (AI OS SECURITY gate): secret-hygiene rules from "
                 "SECURITY.md apply — no secret VALUES in code/logs/commits; new "
                 "logs go through redaction; never commit env/key/credential files. "
                 "(Full rules were provided earlier this session.)"

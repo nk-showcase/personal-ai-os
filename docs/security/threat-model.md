@@ -81,41 +81,65 @@ These are the properties the reference code actually enforces:
 
 ---
 
-## 3. Approval and the no-confirmation coding path
+## 3. Approval: routine coding uninterrupted, dangerous tool calls gated
 
 This is the system's central security trade-off and deserves a plain statement.
 
-**By default, the coding agent runs without per-tool Allow/Deny prompts.** The permission
-mode resolves to `bypassPermissions` when unset (`bot/claude_policy.py:19`,
-`resolve_claude_permission_mode` at `bot/claude_policy.py:26`), and the bridge runs the
-agent in that mode (`bot/claude_bridge_worker.py:505-512`). This is deliberate: driving a
-coding agent from a phone must not become an endless stream of confirmations for every
-file edit.
+**Routine coding runs without per-tool prompts; dangerous tool calls wait for the
+operator's Allow/Deny.** The per-tool gate is **enabled by default**
+(`bot/claude_policy.tool_approvals_enabled`): with the gate on, the permission mode
+resolves to `default` and the agent runs with a `can_use_tool` callback
+(`bot/claude_bridge_worker.make_gated_can_use_tool`). A pure policy function
+(`bot/claude_policy.approval_reason`) classifies each tool call: routine work (edits,
+commits, pushes to a working branch, tests, ordinary git) is allowed instantly — driving
+a coding agent from a phone must not become an endless stream of confirmations — while
+dangerous/irreversible/outbound actions (force-push, push to main, deletions, destructive
+reset, history rewrites, service control, download-and-execute, package installs, outbound
+data sends, touching secrets/security/deploy files) are placed on the durable approval
+queue (`make_queue_approver`, `bot/claude_worker_runner.py`) and wait for the operator's
+decision on the phone.
 
-Instead of per-tool prompts, the routine coding path is constrained by a **fail-closed
+The gate is **fail-closed** at every joint: a **timeout resolves to a safe deny** (returns
+`False` and closes the approval row), an error inside the policy function resolves to
+deny, and an SDK without `can_use_tool` support fails the task loudly instead of running
+ungated. The kill-switch `AIOS_TOOL_APPROVALS=0` restores the old no-confirm
+`bypassPermissions` mode; an explicit `AIOS_CLAUDE_PERMISSION_MODE` always wins (note that
+an explicit `bypassPermissions` also disables the gate — the SDK does not call the
+callback in bypass mode).
+
+Independently of the per-tool gate, the coding path is constrained by a **fail-closed
 policy gate** (`bot/claude_policy.validate_task_execution_policy`), which requires all of:
 
 - a durable queue as the task source,
 - an operator-only Telegram route,
 - an allow-listed project alias (the repository is derived from the alias, never taken
   as an arbitrary path from the queue),
-- a known permission mode (an unknown mode fails), and
+- a known execution mode (an unknown mode fails), and
 - execution on the dedicated coding-worker service, not the receiver.
 
-Dangerous operations are still confirmed by their own mechanisms (send-preview
-confirmation, push/force-push guards), not by per-tool gating.
+**Boundary — the classifier is a speed bump, not a hermetic barrier.** `approval_reason`
+is a regex filter over the tool name and input. It catches accidental self-harm and the
+obviously dangerous; it does **not** catch deliberate or injected exfiltration through an
+arbitrary network client (a GET with a secret in the query string, a python socket, an
+encoded nonstandard channel), and it does not claim to. Two gaps are worth naming outright,
+because they matter for the single-user trust assumption:
 
-**Boundary — per-tool approval is skipped by default.** Per-tool Allow/Deny is an
-**optional, non-default mode** controlled by `AIOS_CLAUDE_PERMISSION_MODE`. A per-tool
-approval queue exists in the codebase (`make_queue_approver`,
-`bot/claude_worker_runner.py:64`) but is **not wired into the default executor**; in the
-default configuration the agent's own tool calls are not individually confirmed. When that
-approver *is* used, an approval **timeout resolves to a safe deny** (returns `False` and
-closes the approval row, `bot/claude_worker_runner.py:86-95`), and a valid operator
-fix/edit/continue task otherwise runs in write mode without an interactive prompt. Adopters
-who do not accept the single-user trust assumption should enable the gating mode and
-wire the approver into the executor. (Exact skip conditions and bypass steps are
-intentionally not published.)
+- **The gate does not protect itself.** `approval_reason` classifies an edit to its *own*
+  policy module (`bot/claude_policy.py`) as routine — the sensitive-path list gates the
+  policy *document*, `.claude/settings`, hooks, `.env`, and keys, but not the source of the
+  classifier. An injected task could therefore edit the policy to always-allow, and — because
+  a routine commit/push flows into the auto-deploy loop and the verification suite does not
+  run the policy tests — that edit could reach the running worker without an Allow/Deny. The
+  model cannot skip the callback at runtime (the gate lives in the SDK's control protocol),
+  but it *can* rewrite the code the callback consults.
+- **The gate does not cover the coding-agent credential file.** `~/.claude/.credentials.json`
+  is not on the sensitive-path list, so reading or copying it is not gated.
+
+Both are honest limits of a regex speed bump, not a hermetic barrier. The real first line of
+defence is the operator-only task route and the single-user trust assumption — not the gate's
+inviolability. A deployment that does not accept single-user trust should close both gaps
+(add the policy modules and the credential path to the sensitive-path list) and provision the
+independent git-level and assistant-level hook layers.
 
 ---
 
@@ -149,15 +173,16 @@ with §4.4, this means personal content is briefly present in cleartext in the t
 zone in the default configuration. This is a documented boundary of the current transport
 design, not a solved property.
 
-### 4.4 Gate-0 leak surface — keyless receiver briefly handles personal content
+### 4.4 Personal views are sent by the keyed worker — single route
 
-The setting that makes the keyed worker send personal views **directly** to Telegram
-(`worker_sends.views`) defaults to **`off`** (`bot/aios_config.py:105-106`,
-`get_worker_sends_views` at line 109). While it is off, decrypted personal views **transit
-the reply queue to the keyless receiver**, which momentarily handles personal content on
-its way to Telegram. The "receiver holds no plaintext" invariant (§1) is therefore only
-fully true once the operator flips this setting **on**. Until then the leak surface — a
-keyless process momentarily in contact with personal content — exists in the default state.
+Decrypted personal views are rendered and delivered to Telegram **directly by the keyed
+worker** (`bot/aios_store_applier.py`, `store_view_applier`); they do **not** transit the
+reply queue back to the keyless receiver. This is the only route — there is no
+receiver-side render fallback and no config switch (a legacy `worker_sends.views` flag
+from the staged cutover has been removed). When the keyed worker is unavailable, the
+receiver answers with a neutral "busy, try again" message instead of falling back to a
+plaintext path. Note the reply-queue boundary of §4.3 still applies to non-view replies
+(task results, status lines) that the transport delivers.
 
 ---
 
@@ -185,22 +210,30 @@ requirement the deployment must uphold, not a property the code enforces at seed
 
 ---
 
-## 6. Transport-thinning plan is a plan, not an implementation
+## 6. Transport thinning is in progress, not complete
 
 The design to thin the transport process so it holds neither keys nor plaintext (see
-`docs/architecture/s6-thin-transport-plan.md`) is a **plan, not yet implemented**. The
-following prerequisites are **unbuilt**:
+`docs/architecture/s6-thin-transport-plan.md`) is **partially implemented**.
 
-- inbound-plaintext encryption (so inbound task text is not persisted in cleartext),
-- per-service `get_secret` enforcement at the transport,
-- the worker scheduler and durable due-timestamp store,
+Landed in this tree:
+
+- the import-side-effect key resolution is gone — importing the transport surface resolves
+  only the transport's own chat token (plus the non-secret owner id); integration/LLM/Git
+  secrets are fetched lazily by the worker-side modules that use them (enforced by
+  `scripts/test_s6_0a_config_boundary.py`),
+- per-service allow-list enforcement in the secrets loader (activated per service via
+  `AIOS_SERVICE_NAME`; simulated by `scripts/test_service_lock.py`),
+- the worker scheduler and durable schedule store (`bot/schedule_*`).
+
+Still **unbuilt**:
+
+- inbound-plaintext encryption — inbound task text is still persisted in **cleartext** in
+  the durable queue (the `store_seal` machinery ships as optional hardening for store
+  payloads, but the task queue itself is not sealed),
 - the fail-closed startup self-check.
 
-Until these land, the transport process resolves integration/LLM/Git keys as an **import
-side-effect at startup** and persists inbound task text in **cleartext**. The intended
-"transport holds neither the decryption key nor plaintext" boundary is therefore currently
-**nominal**, not achieved. These are stated as requirements the design must satisfy, not as
-properties already in place.
+The intended "transport holds neither the decryption key nor durable plaintext" boundary is
+therefore **partial**: the key half largely holds; the plaintext half does not yet.
 
 ---
 
@@ -210,39 +243,41 @@ The design calls for **intentional duplication** of critical prohibitions (block
 to the main branch, force-push, and printing secret values) in two independent layers, so
 that bypassing one layer does not open the action.
 
-**Boundary — the duplication is partial in this reference tree.** Only the **worker-side
-Python guards** actually ship as runnable code: `email-sensitive-filter`,
-`confirm-before-email-send`, and `cache-fallback-warning` (see
-`docs/security/guards-and-hooks.md`). The **assistant-level Claude Code hooks**
-(secret-scan-before-output, block-secrets-in-prompts, block-destructive-delete,
-block-direct-push-to-main, block-print-secrets) and the **git `pre-push` hooks**
-(block-force-push, block-direct-push-to-main) are described in the design but are **not
-present as runnable code** — the hooks directory (`claude/hooks/`) ships empty (only a
-`.gitkeep`). For the critical prohibitions, the "two independent places" property is
-therefore **aspirational** in this tree: a deployment must provision the assistant-side and
-git-level layers itself to achieve it.
+**Boundary — the duplication is partial in this reference tree.** One runnable layer for the
+critical git prohibitions ships: the **per-tool approval gate** (§3) intercepts force-push,
+push-to-main, deletions, destructive resets, and history rewrites at the coding agent's tool
+boundary, enabled by default and fail-closed (within the two documented classifier gaps of
+§3). The mail-related guards named in `docs/security/guards-and-hooks.md`
+(`email-sensitive-filter`, `confirm-before-email-send`) do **not** ship — no mail code ships
+in this tree — and `cache-fallback-warning` ships only as a plain cache-fallback log line, not
+the operator-warning/degraded-mode guard the design describes. The **second, independent
+layer** — the assistant-level Claude Code file hooks (secret-scan-before-output,
+block-secrets-in-prompts, block-destructive-delete, block-direct-push-to-main,
+block-print-secrets) and the **git `pre-push` hooks** (block-force-push,
+block-direct-push-to-main) — is described in the design but **not present as runnable code**:
+the hooks directory (`claude/hooks/`) ships empty (only a `.gitkeep`). For the critical
+prohibitions, the "two independent places" property therefore still requires a deployment to
+provision the git-level and file-hook layers itself.
 
 ---
 
 ## 8. Secret-store boundaries
 
-- **Unused-but-allow-listed secret names (least-privilege residue).** The integrations
-  worker's allow-list still contains legacy/alternate mailbox-secret **names** that no
-  surviving code path uses (`bot/secrets_loader.py`). They are retained only because the
-  secret-map config and a drift-check test compare against this exact set. This is a
-  factual current-state boundary: names remain allow-listed beyond what the running code
-  needs, which is least-privilege residue rather than an active exposure.
-- **Mailbox send is not implemented.** A mailbox **send** token is present in the
-  allow-list, but sending is **not implemented** (a later phase). A send would go through a
-  preview-and-confirm mechanism; that mechanism is a documented pending boundary, not
-  present here.
-- **Config discrepancies between design and runnable code.** In this reference tree the
-  V2 service entrypoints are **target templates, not runnable services**; the shipped
-  service units do not read an environment file, so some documented environment variables
-  are not picked up as written; and there are name-level mismatches between the design
-  text and the map (a Git write-token name, mailbox app-password vs. token names, and which
-  worker an LLM key is attributed to). These are unreconciled gaps between the documented
-  design and the code as it stands, not verified working configuration.
+- **Allow-lists are minimal and fully used.** Every name in `bot/secrets_loader.py`
+  `SERVICE_ALLOWED` maps to an active code path (mirrored in `config/secrets-map.yaml` and
+  drift-checked by `scripts/test_secret_policy.py`); no mailbox-secret names are granted to
+  any service. See SECURITY.md §6 for the per-name justification.
+- **Mailbox send is not implemented.** No mail code ships in this tree and no mail secret
+  name is allow-listed. Any future send must go through a preview-and-confirm mechanism;
+  that mechanism is a documented pending boundary (`docs/security/mail-integration-policy.md`),
+  not present here.
+- **Setup is documented, not turnkey.** The shipped systemd units read a per-service
+  environment file and run the V2 entrypoints (`bot.telegram_bot`, `bot.claude_worker`,
+  `bot.integrations_worker`), but they are still **templates**: server accounts, env files,
+  secret-manager machine tokens, and host permissions are provisioned out-of-band, and the
+  placeholders (`${AIOS_HOME}` and friends) must be substituted per deployment. Mail-related
+  secret names remain documented-only (no mail code ships). Treat the tree as a reference
+  architecture that requires a server and manual setup, not verified one-click configuration.
 
 ---
 
@@ -262,13 +297,13 @@ This model does **not** attempt to defend against:
 
 | # | Boundary | Status |
 |---|---|---|
-| 3 | Per-tool Allow/Deny skipped by default for operator coding tasks; approver exists but is unwired | By design; gating is optional |
+| 3 | Per-tool Allow/Deny gate on dangerous tool calls, enabled by default, fail-closed; classifier is a regex speed bump, not a hermetic barrier | Wired and on; boundary stated |
 | 4.1 | Task/dialogue bodies plaintext in Git; only names/commits neutralized | Deferred (Block -1B) |
 | 4.2 | Laptop-task handoff body plaintext in inbox repo | Body encryption not implemented |
 | 4.3 | Reply payload not encrypted at rest | Current transport boundary |
-| 4.4 | Keyless receiver briefly handles personal content while `worker_sends.views` is off (default) | Leak surface in default state |
+| 4.4 | Personal views rendered and sent by the keyed worker only; no receiver-side fallback | Single route |
 | 5.1 | Write double-apply if caller retries without a stable business key | Idempotency contract on callers |
 | 5.2 | Due row with unregistered kind is dropped, not retried | Operational gap |
-| 6 | Thin-transport isolation is planned, not built; transport resolves keys at import and persists inbound text plaintext | Nominal, not achieved |
+| 6 | Thin-transport isolation partial: import-time key resolution removed, but inbound task text still persists in cleartext | In progress |
 | 7 | Assistant-side and git-level guards not present as runnable code (hooks dir empty) | Partial duplication |
-| 8 | Unused allow-listed secret names; mailbox send unimplemented; design/code config discrepancies | Residue / pending / unreconciled |
+| 8 | Mailbox send unimplemented (preview-confirm mechanism pending); setup is documented, not turnkey | Pending / manual setup |

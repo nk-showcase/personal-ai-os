@@ -12,13 +12,13 @@ Properties:
   - The Claude Code login is a local-only file ~/.claude/.credentials.json, installed OUTSIDE
     the bot. The worker does NOT configure the login from env/Telegram.
 
-APPROVAL BOUNDARY: claude_bridge._run_claude runs the coding agent with the default
-permission mode 'bypassPermissions', so per-tool Allow/Deny confirmations are not requested
-for the agent's own tool calls in the default configuration (the gating mode is selectable
-via claude_policy.resolve_claude_permission_mode). The bot/chat_id parameters of _run_claude
-are unused, so the worker calls it with bot=None, chat_id=0 (no Telegram token needed). A
-per-tool approval queue (make_queue_approver) exists but is not wired into the current
-executor. See docs/security/threat-model.md.
+APPROVAL BOUNDARY: the per-tool human-in-the-loop gate is wired in and ENABLED by default:
+`approve` from make_queue_approver travels into _run_claude and becomes the can_use_tool gate —
+DANGEROUS actions (claude_policy.approval_reason) wait for the operator's Allow/Deny on the
+phone; routine work is allowed instantly. Kill-switch: AIOS_TOOL_APPROVALS=0 restores the old
+no-confirm bypassPermissions behaviour. The bot parameter of _run_claude is unused, so the
+worker calls it with bot=None (no Telegram token needed) — the Allow/Deny card is delivered
+through reply_queue (make_approval_notifier), not directly. See docs/security/threat-model.md.
 """
 from __future__ import annotations
 
@@ -146,10 +146,12 @@ async def _claude_executor(*, task, read_only, is_continue, resume_session_id, d
     """The real coding executor: prepare the repo and run claude_bridge._run_claude.
 
     Called only at real runtime (not in tests). claude_bridge is imported lazily.
-    bot/chat_id are unused in _run_claude -> None/0 (the worker needs no Telegram token).
+    The bot parameter is unused in _run_claude -> None (the worker needs no Telegram token).
     The Claude login is a local-only file on the server; the worker does not configure it
-    from env. `approve` is accepted for compatibility with the executor contract, but the
-    current _run_claude does not use it (default permission mode).
+    from env. `approve` travels into _run_claude, where it becomes the can_use_tool gate —
+    dangerous actions (claude_policy.approval_reason) are confirmed by the operator
+    (Allow/Deny), routine work is allowed instantly. With AIOS_TOOL_APPROVALS=0 the gate is
+    off (bypassPermissions).
 
     Reply-back: on completion (success OR error) it puts a human-readable reply for the
     operator into reply_queue — the transport delivers it to Telegram. The returned result
@@ -195,9 +197,9 @@ async def _claude_executor(*, task, read_only, is_continue, resume_session_id, d
         _pulse_task = asyncio.ensure_future(_pulse()) if chat_id else None
         try:
             text, _stderr, session_id, edited = await cb._run_claude(
-                repo, task["task_text"], None, 0, read_only,
+                repo, task["task_text"], None, chat_id or 0, read_only,
                 design_mode=design_mode, resume_session_id=resume_session_id,
-                progress_sink=_sink,
+                progress_sink=_sink, approve=approve,
             )
         finally:
             if _pulse_task:

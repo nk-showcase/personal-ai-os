@@ -6,13 +6,13 @@
 # Fails (exit 1) if:
 #  1) a systemd unit runs the single monolithic process bot.main as a service;
 #  2) a systemd unit targets a nonexistent module bot.X and is NOT marked TARGET / not-runnable;
-#  3) any wiring file (systemd / Procfile / Dockerfile / entrypoint / config) contains chatbot-runtime-v1;
+#  3) any wiring file (systemd / Procfile / Dockerfile / entrypoint / config) contains single-process-runtime-v1;
 #  4) Procfile / Dockerfile contain bot.main without a LEGACY marker (the monolith must not look go-forward);
 #  5) docs ENDORSE running the single monolithic process (phrases like "monolith runtime" etc.).
 #
-# Run:  REPO=/path/to/repo bash scripts/vps_spec_guard.sh   (default REPO=$HOME/apps/ChatBot)
+# Run:  REPO=/path/to/repo bash scripts/vps_spec_guard.sh   (default REPO=$HOME/apps/app)
 set -u
-REPO="${REPO:-$HOME/apps/ChatBot}"
+REPO="${REPO:-$HOME/apps/app}"
 cd "$REPO" 2>/dev/null || { echo "FAIL: no $REPO"; exit 2; }
 fail=0
 bad(){ echo "FAIL: $1"; fail=1; }
@@ -39,15 +39,15 @@ for sf in systemd/*.service; do
 done
 [ "$svc_found" = "1" ] || echo "NOTE: no systemd/*.service found"
 
-# --- 3: chatbot-runtime-v1 in wiring files ---
+# --- 3: single-process-runtime-v1 in wiring files ---
 wiring=(systemd/*.service Procfile Dockerfile entrypoint.sh)
 [ -d config ] && wiring+=(config/*)
 hit=0
 for f in "${wiring[@]}"; do
   [ -f "$f" ] || continue
-  grep -qF 'chatbot-runtime-v1' "$f" && { echo "  -> $f"; hit=1; }
+  grep -qF 'single-process-runtime-v1' "$f" && { echo "  -> $f"; hit=1; }
 done
-[ "$hit" = "0" ] && ok "no chatbot-runtime-v1 in wiring files" || bad "chatbot-runtime-v1 present in wiring (forbidden)"
+[ "$hit" = "0" ] && ok "no single-process-runtime-v1 in wiring files" || bad "single-process-runtime-v1 present in wiring (forbidden)"
 
 # --- 4: Procfile / Dockerfile containing bot.main must carry a LEGACY marker ---
 for f in Procfile Dockerfile; do
@@ -137,7 +137,7 @@ else ok "no instruction to set secrets via the hosting dashboard"; fi
 rm -f /tmp/specguard_rw.txt
 
 # --- 10: systemd units do not reference a nonexistent /opt/ai-os (Block 5.2/8) ---
-# The real deploy is ${AIOS_HOME}/apps/ChatBot (the same REPO=$HOME/apps/ChatBot default across all
+# The real deploy is ${AIOS_HOME}/apps/app (the same REPO=$HOME/apps/app default across all
 # vps_*.sh and in the units' EnvironmentFile). The /opt/ai-os/{repo,venv} path was never created -> a
 # unit pointing there would not start. Static literal check (does not touch the FS; works locally and on the VPS).
 optref=0
@@ -146,7 +146,7 @@ for sf in systemd/*.service; do
   grep -qF '/opt/ai-os' "$sf" && { echo "  -> $(basename "$sf") references /opt/ai-os"; optref=1; }
 done
 [ "$optref" = "0" ] && ok "systemd units do not reference a nonexistent /opt/ai-os" \
-                     || bad "a systemd unit references /opt/ai-os (absent on the VPS; the path is \${AIOS_HOME}/apps/ChatBot)"
+                     || bad "a systemd unit references /opt/ai-os (absent on the VPS; the path is \${AIOS_HOME}/apps/app)"
 
 # --- 11: pc_tasks does not emit the task body into a file name or commit message (Block -1A) ---
 # Neutral metadata: file name = timestamp+random id, commit = "pc-task: queued <id>".

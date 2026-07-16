@@ -11,8 +11,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=ai-os
-WorkingDirectory=${AIOS_HOME}/apps/ChatBot
-ExecStart=${AIOS_HOME}/apps/ChatBot/.venv/bin/python -m bot.sync_service
+WorkingDirectory=${AIOS_HOME}/apps/app
+ExecStart=${AIOS_HOME}/apps/app/.venv/bin/python -m bot.sync_service
 Restart=always
 RestartSec=10
 Environment=PYTHONUNBUFFERED=1

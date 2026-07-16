@@ -68,8 +68,8 @@ Secret **names** (`TELEGRAM_BOT_TOKEN`, `NOTION_API_KEY`, …) are **not** secre
   `TELEGRAM_OWNER_ID`, notion DB ids read from env). All other secrets are **fetched at runtime** from
   Bitwarden Secrets Manager via `bot/secrets_loader.py` (`get_secret`) and are **never logged**.
 - **One Bitwarden project per service**, machine token scoped read-only:
-  `telegram-bot → chatbot-telegram-bot`, `claude-worker → chatbot-claude-worker`,
-  `integrations-worker → chatbot-integrations`.
+  `telegram-bot → aios-telegram-bot`, `claude-worker → aios-claude-worker`,
+  `integrations-worker → aios-integrations`.
 - **The Claude Code credential file** (`${AIOS_HOME}/.claude/.credentials.json`) is a **local-only,
   mode-0600 file** — not in Bitwarden, not in git. Only its metadata (path/mode/owner/size) may be
   inspected, **never its contents**.
@@ -94,20 +94,25 @@ change cannot silently break it:
 | Value-free scanner | `scripts/aios_log_scan.py` | counts matches by pattern name, **prints no values**; run it over journals and before any export |
 
 **What actually ships as runnable code** in this repository: log redaction, the value-free scanner,
-`.gitignore`, and `secrets_loader`. Git-level pre-commit/pre-push secret-scan hooks and assistant-level
-Claude Code hooks are described in the design (`docs/security/guards-and-hooks.md`) but are **not** present
-as runnable code in the published tree — the `claude/hooks/` directory ships empty. Until those hooks are
-wired, run the secret scan manually over the diff (`scripts/aios_log_scan.py`) before committing. See the
-Threat Model & Limitations section below.
+`.gitignore`, `secrets_loader`, and the per-tool approval gate on the coding agent (dangerous tool calls
+wait for the operator's Allow/Deny — see §6 and `docs/security/approval-policy.md`). Git-level
+pre-commit/pre-push secret-scan hooks and assistant-level Claude Code hooks are described in the design
+(`docs/security/guards-and-hooks.md`) but are **not** present as runnable code in the published tree — the
+`claude/hooks/` directory ships empty. Until those hooks are wired, run the secret scan manually over the
+diff (`scripts/aios_log_scan.py`) before committing. See the Threat Model & Limitations section below.
 
 ---
 
 ## 4. Encryption of data at rest
 
-- **At-rest encryption is a feature flag, off by default.** It is controlled by `AIOS_CONTEXT_ENCRYPTION`
-  (default `0`). **With the flag off, note content is written as cleartext** into the content column. Turn
-  the flag on (and provision the keys below) to encrypt personal free text at rest. The claims in the rest
-  of this section describe the behaviour **when encryption is enabled**.
+- **At-rest encryption is a feature flag: on in production, off in this tree's default.** It is controlled by
+  `AIOS_CONTEXT_ENCRYPTION` (code default `0`, so the tree imports and the test suite runs without provisioning
+  production keys). **With the flag off**, the direct-write helper would write cleartext, but the keyed worker's
+  queue applier — the only path the shipped receiver uses — **refuses store operations fail-closed** rather than
+  serving them keyless, so no personal round-trip completes on defaults. **In the production deployment the flag
+  is on** and every domain that stores personal free text writes encrypted at rest. Turn the flag on (and
+  provision the keys below, or the dev test-KEK) to exercise the store. The claims in the rest of this section
+  describe the behaviour **when encryption is enabled**.
 - When enabled, personal data is written through a single encryptor function; on that path no code writes
   cleartext personal content into a content field (a test invariant plus a barrier enforce this).
 - **The encryption master key and the age identity are "never" class secrets:** not in git, not in
@@ -117,8 +122,9 @@ Threat Model & Limitations section below.
 - **Two-seal envelope:** the data key is sealed to two recipients — the working key of the decrypting
   service and the operator's offline recovery key — so that recovery is possible without ever placing the
   offline key on the server.
-- **Decryption boundary:** the key is held only by the `claude-worker` / context service; the
-  `telegram-bot` **never** receives it (enforced by a barrier check).
+- **Decryption boundary:** the key is held only by the keyed **integrations worker** (the service that
+  decrypts the context store and sends personal views, running under its own OS user); the `telegram-bot`
+  **never** receives it (enforced by a barrier check).
 - **Migration discipline:** read → encrypt → **verify** → delete the original, with no cleartext temporary
   files.
 
@@ -141,28 +147,30 @@ A security document with zero stated limitations is a red flag. This system is a
 reference architecture**; the boundaries below are deliberate design trade-offs, not oversights. The full
 threat model lives in `docs/security/threat-model.md`; the current operational boundaries are:
 
-- **Trust model — single operator, no per-action confirmation for coding tasks.** The coding agent runs
-  under the default permission mode `bypassPermissions` (`bot/claude_policy.py:19`,
-  `bot/claude_bridge_worker.py`). Per-tool Allow/Deny confirmations are therefore **not** requested for
-  the agent's own tool calls in the default configuration; execution is gated instead by a fail-closed
-  policy check (durable queue, operator-only route, allowlisted alias, and a known execution mode). A
-  per-tool approval queue exists in the code (`make_queue_approver`, `bot/claude_worker_runner.py`) but is
-  not wired into the current executor. This is the system's real approval boundary: it assumes a single
-  trusted operator and skips interactive approval for that operator's coding tasks. When an approval is
-  requested elsewhere and times out, it resolves to a safe deny.
+- **Trust model — single operator; routine coding uninterrupted, dangerous tool calls gated.** The
+  per-tool human-in-the-loop gate is **enabled by default** (`bot/claude_policy.tool_approvals_enabled`):
+  the coding agent runs with a `can_use_tool` callback (`bot/claude_bridge_worker.make_gated_can_use_tool`)
+  that classifies every tool call through a pure policy function (`bot/claude_policy.approval_reason`).
+  Routine coding is allowed instantly; dangerous/irreversible/outbound actions go onto the durable
+  approval queue (`make_queue_approver`, `bot/claude_worker_runner.py`) and wait for the operator's
+  Allow/Deny on the phone; a 5-minute timeout, a policy error, or an SDK without callback support all
+  resolve fail-closed (deny / loud failure, never a silent pass). The kill-switch `AIOS_TOOL_APPROVALS=0`
+  restores the old no-confirm `bypassPermissions` mode. Execution is additionally gated by the fail-closed
+  task-policy check (durable queue, operator-only route, allowlisted alias, and a known execution mode).
+  Honest boundary: the classifier is a regex filter over the command string — a speed bump against
+  accidental self-harm and the obviously dangerous, not a hermetic anti-exfiltration barrier; the
+  operator-only task route remains the first line of defence.
 
 - **Scheduler: an unregistered job kind is dropped, not retried.** The scheduler claims a due batch of jobs
   atomically; a due row whose kind has no registered handler is dropped, and no per-kind error is surfaced.
   A mis-seeded job kind is therefore lost rather than retried — an operational gap to be aware of when
   adding new scheduled work.
 
-- **Worker-sends config flag is defined but not wired.** A `worker_sends.views` flag exists in
-  `bot/aios_config.py` (`get_worker_sends_views`, default `off`), but **no code reads it** in this slice.
-  Regardless of the flag, the store-view path already sends from the keyed integrations worker: a
-  `store_view` row is decrypted, rendered, and delivered to Telegram **directly by the keyed worker**
-  (`bot/aios_store_applier.py`, `store_view_applier`), so decrypted views for that path do **not** transit
-  the reply queue back to the keyless receiver. The flag is a target switch for a broader cutover, not a
-  control that is on/off today, and turning it on would not change this path's behaviour as shipped.
+- **Personal views are rendered and sent by the keyed worker — single route, no flag.** A `store_view`
+  row is decrypted, rendered, and delivered to Telegram **directly by the keyed worker**
+  (`bot/aios_store_applier.py`, `store_view_applier`), so decrypted views do **not** transit the reply
+  queue back to the keyless receiver. This is the only route: there is no receiver-side render fallback
+  and no config switch — a legacy `worker_sends.views` flag from the staged cutover has been removed.
 
 - **Legacy plaintext bodies in Git-committed files.** Task and dialogue bodies still travel in cleartext
   inside Git-committed files; only file names and commit messages are neutralized. Scrubbing old Git
@@ -183,16 +191,19 @@ threat model lives in `docs/security/threat-model.md`; the current operational b
   a documented target, **not wired in this build** — no such check exists in the shipped code. The full
   policy a future mail integration must satisfy is `docs/security/mail-integration-policy.md`.
 
-- **Critical prohibitions currently rest on a single layer.** The intended design duplicates the most
-  critical prohibitions (block-secrets-in-output, block-destructive-delete, block-direct-push-to-main) in
-  two independent places — assistant-level Claude Code hooks and git hooks. As noted in §3, those hooks are
-  not present as runnable code in the published tree; the duplication is aspirational for now, and the
-  worker-side Python guards are the layer that actually runs.
+- **Critical prohibitions: one runnable layer, duplication still partial.** The intended design duplicates
+  the most critical prohibitions (block-destructive-delete, block-direct-push-to-main, block-force-push) in
+  two independent places. One runnable layer now exists: the per-tool approval gate intercepts those
+  actions at the coding agent's tool boundary (enabled by default, fail-closed). The second, independent
+  layer — git `pre-push` hooks and assistant-level Claude Code file hooks — is still not present as
+  runnable code in the published tree (§3); a deployment must provision it itself to get the intended
+  two-layer property.
 
-- **Configuration templates vs. runnable services.** Some entrypoints and unit files in this tree are
-  target templates rather than turnkey runnable services (for example, env-file wiring and a few
-  secret-name mappings are not yet reconciled end to end). Treat this repository as a reference
-  architecture that requires a server and manual setup, not a one-click deployment.
+- **Configuration templates vs. turnkey services.** The systemd units read per-service environment
+  files and run the V2 entrypoints, but they are templates: server accounts, env files, secret-manager
+  machine tokens, and host permissions are provisioned out-of-band, and placeholders (`${AIOS_HOME}`
+  and friends) must be substituted per deployment. Treat this repository as a reference architecture
+  that requires a server and manual setup, not a one-click deployment.
 
 ---
 

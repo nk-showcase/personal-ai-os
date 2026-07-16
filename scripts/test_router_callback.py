@@ -4,7 +4,7 @@ callback path); a STUB handler is registered into CALLBACK_HANDLERS to prove the
 
 Platform: the project venv (py3.12) — router_dispatch/conv_state use bare `X | None` at module scope
 without future-annotations (TypeError on bare 3.9).
-Run:  cd ~/apps/ChatBot && PYTHONPATH=. .venv/bin/python scripts/test_router_callback.py
+Run:  cd ~/apps/app && PYTHONPATH=. .venv/bin/python scripts/test_router_callback.py
 """
 import asyncio
 import json

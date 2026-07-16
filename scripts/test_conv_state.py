@@ -10,7 +10,7 @@ Offline, no live Telegram / token. Two platforms:
     NO init_kek, no age, no Bitwarden, zero owner step. Auto-skipped where cryptography is absent.
 
 Run (Mac):  PYTHONPATH=. python3 scripts/test_conv_state.py
-Run (VPS):  cd ~/apps/ChatBot && PYTHONPATH=. .venv/bin/python scripts/test_conv_state.py
+Run (VPS):  cd ~/apps/app && PYTHONPATH=. .venv/bin/python scripts/test_conv_state.py
 """
 import json
 import os

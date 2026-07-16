@@ -56,11 +56,16 @@ def main() -> int:
     check("unknown mode fails", raises(lambda: p.validate_task_execution_policy({"alias": "myproj", "mode": "delete"}, known_aliases=known)))
     check("empty mode fails", raises(lambda: p.validate_task_execution_policy({"alias": "myproj", "mode": ""}, known_aliases=known)))
 
-    # resolve permission mode: default bypassPermissions (no-confirm policy)
+    # resolve permission mode (human-in-the-loop): the gate is enabled by default ->
+    # 'default' (permission requests go to can_use_tool); the kill-switch restores bypass.
     os.environ.pop("AIOS_CLAUDE_PERMISSION_MODE", None)
-    check("default permission mode = bypassPermissions", p.resolve_claude_permission_mode() == "bypassPermissions")
-    os.environ["AIOS_CLAUDE_PERMISSION_MODE"] = "default"
-    check("env override respected (optional gating)", p.resolve_claude_permission_mode() == "default")
+    os.environ.pop("AIOS_TOOL_APPROVALS", None)
+    check("gate on by default -> permission mode 'default'", p.resolve_claude_permission_mode() == "default")
+    os.environ["AIOS_TOOL_APPROVALS"] = "0"
+    check("kill-switch -> bypassPermissions (old no-confirm)", p.resolve_claude_permission_mode() == "bypassPermissions")
+    os.environ.pop("AIOS_TOOL_APPROVALS", None)
+    os.environ["AIOS_CLAUDE_PERMISSION_MODE"] = "acceptEdits"
+    check("explicit env override respected", p.resolve_claude_permission_mode() == "acceptEdits")
     os.environ.pop("AIOS_CLAUDE_PERMISSION_MODE", None)
 
     if failed:

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# vps_status_check.sh — read-only VPS state for the ChatBot AI OS.
+# vps_status_check.sh — read-only VPS state for the AI OS.
 # SAFE: runs nothing, neither reads nor prints secrets, does not start the bot.
 # Run on the VPS:  bash scripts/vps_status_check.sh
 set -u
-REPO="${REPO:-$HOME/apps/ChatBot}"
+REPO="${REPO:-$HOME/apps/app}"
 fail=0
 ok(){ echo "PASS: $1"; }
 bad(){ echo "FAIL: $1"; fail=1; }

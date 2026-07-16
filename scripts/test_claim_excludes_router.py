@@ -34,14 +34,14 @@ CHAT = 555
 # claim would grab the older router row.
 rid = task_queue.enqueue_task(chat_id=CHAT, alias="router", mode="inbound",
                               task_text='{"kind":"callback"}', source="telegram")
-cid = task_queue.enqueue_task(chat_id=CHAT, alias="ChatBot", mode="run",
+cid = task_queue.enqueue_task(chat_id=CHAT, alias="demo-project", mode="run",
                               task_text="do coding", source="telegram")
 
 # T1: claim_next_task returns the CODING row, NOT the older router row.
 t = task_queue.claim_next_task(worker_id="claude-w")
 check("T1a: claim_next_task returned a task", t is not None)
 check("T1b: claim_next_task returned the CODING row (alias != 'router')",
-      t is not None and t["alias"] == "ChatBot" and t["id"] == cid)
+      t is not None and t["alias"] == "demo-project" and t["id"] == cid)
 check("T1c: claim_next_task did NOT steal the router row", t is None or t["alias"] != "router")
 
 # T2: the router row is STILL queued (untouched by the generic claim) and claim_next_route_task gets it.
