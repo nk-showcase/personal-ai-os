@@ -67,10 +67,18 @@ def resolve_claude_permission_mode() -> str:
 
 # Security / secrets / deploy / agent-policy files: editing them (and reading them through
 # Bash — reading .env prints secrets into the task log, the same leak class the gate closes).
+# Also gated (self-protection):
+#  1. the coding-agent credential file `~/.claude/.credentials.json` — reading/copying it now
+#     prompts (it is the coder's "key to the flat");
+#  2. the gate's own modules (claude_policy / claude_bridge_worker / claude_worker /
+#     claude_worker_runner) — an injected task cannot silently rewrite approval_reason to
+#     always-allow and ride the auto-deploy loop into the worker without an Allow/Deny.
 _SENSITIVE_PATH_RE = re.compile(
     r"(\.env\b|secrets-map\.yaml|\bsecrets?[-_./]|\.ssh/|authorized_keys|id_rsa|id_ed25519"
     r"|\.identity\b|kek\.age|/etc/systemd/|/etc/sudoers|sshd_config|/etc/ufw|/etc/nftables"
     r"|\.claude/settings|\.claude/hooks/|claude/hooks/|/\.ai-os/env/|/\.ai-os/keys/"
+    r"|\.credentials\.json|\.claude/\.credentials"
+    r"|claude_policy\.py|claude_bridge_worker\.py|claude_worker\.py|claude_worker_runner\.py"
     r"|\bCLAUDE\.md\b|docs/security/|approval-policy)",
     re.IGNORECASE,
 )

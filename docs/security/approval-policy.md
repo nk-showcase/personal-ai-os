@@ -48,8 +48,9 @@ write-backs are **not** behind the gate today (they execute directly once enqueu
   `systemctl` service control; server reboot; the firewall; crontab; sending mail; changing secrets
   in the secret manager (`bws`); ssh/scp/rsync/nc/telnet to other hosts; naive outbound data sends
   via `curl`/`wget` (POST/PUT/upload); reading/editing secret files, keys, `.claude` settings and
-  hooks, systemd units, CLAUDE.md, and this policy itself. Robust to global git flags
-  (`git --no-pager reset --hard`).
+  hooks, the coding-agent credential file (`~/.claude/.credentials.json`), systemd units,
+  CLAUDE.md, this policy itself, and the gate's own modules (`claude_policy.py` and its wiring).
+  Robust to global git flags (`git --no-pager reset --hard`).
 - BOUNDARY (honestly): this is a regex filter over the command string — a speed bump, NOT a
   hermetic anti-exfiltration barrier. Deliberate or injected exfiltration through an arbitrary
   network client (a GET with a secret in the query, a python socket, base64 plus a nonstandard

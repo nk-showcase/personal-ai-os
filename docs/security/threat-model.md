@@ -121,25 +121,25 @@ policy gate** (`bot/claude_policy.validate_task_execution_policy`), which requir
 is a regex filter over the tool name and input. It catches accidental self-harm and the
 obviously dangerous; it does **not** catch deliberate or injected exfiltration through an
 arbitrary network client (a GET with a secret in the query string, a python socket, an
-encoded nonstandard channel), and it does not claim to. Two gaps are worth naming outright,
-because they matter for the single-user trust assumption:
+encoded nonstandard channel), and it does not claim to.
 
-- **The gate does not protect itself.** `approval_reason` classifies an edit to its *own*
-  policy module (`bot/claude_policy.py`) as routine — the sensitive-path list gates the
-  policy *document*, `.claude/settings`, hooks, `.env`, and keys, but not the source of the
-  classifier. An injected task could therefore edit the policy to always-allow, and — because
-  a routine commit/push flows into the auto-deploy loop and the verification suite does not
-  run the policy tests — that edit could reach the running worker without an Allow/Deny. The
-  model cannot skip the callback at runtime (the gate lives in the SDK's control protocol),
-  but it *can* rewrite the code the callback consults.
-- **The gate does not cover the coding-agent credential file.** `~/.claude/.credentials.json`
-  is not on the sensitive-path list, so reading or copying it is not gated.
+Two self-protection cases are on the sensitive-path list, so they *are* gated (verified by
+`scripts/test_tool_approval_gate.py`):
 
-Both are honest limits of a regex speed bump, not a hermetic barrier. The real first line of
-defence is the operator-only task route and the single-user trust assumption — not the gate's
-inviolability. A deployment that does not accept single-user trust should close both gaps
-(add the policy modules and the credential path to the sensitive-path list) and provision the
-independent git-level and assistant-level hook layers.
+- **The gate protects its own modules.** Editing `bot/claude_policy.py`,
+  `claude_bridge_worker.py`, `claude_worker.py`, or `claude_worker_runner.py` requires an
+  Allow/Deny, so an injected task cannot silently rewrite `approval_reason` to always-allow and
+  ride the auto-deploy loop (routine commit/push → `git pull --ff-only` → self-restart) into the
+  running worker. The model cannot skip the callback at runtime (the gate lives in the SDK's
+  control protocol) *and* cannot quietly edit the code the callback consults.
+- **The gate covers the coding-agent credential file.** Reading or copying
+  `~/.claude/.credentials.json` (the coder's login) is gated.
+
+The honest residual limit stands: a regex over the command string is still a speed bump, not a
+hermetic barrier — a determined injection can encode a payload into a form the pattern does not
+recognise. The real first line of defence remains the operator-only task route and the
+single-user trust assumption, backed (per deployment) by the independent git-level and
+assistant-level hook layers.
 
 ---
 
