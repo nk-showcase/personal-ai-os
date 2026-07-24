@@ -1,6 +1,15 @@
 # Diagrams — how to read them
 
-Four diagrams, one idea each. Terms used across them are in the glossary below.
+One overview map plus four detailed diagrams, one idea each. Terms used across them are in the glossary below.
+
+## architecture-overview
+
+![Architecture overview](architecture-overview.png)
+
+**What it shows:** the whole system on one page — what it does, the three-service
+zero-trust split with what each service holds and never holds, the security controls,
+and the external integrations. Start here; the four diagrams below each zoom into one
+aspect. (`architecture-overview.html` is the editable source the PNG is rendered from.)
 
 ## components-trust-boundaries
 

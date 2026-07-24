@@ -8,6 +8,8 @@
 
 This is a reference architecture for a **single-user personal AI OS**: an always-on service running on a dedicated server that lets one person drive an agentic coding workflow entirely from a phone. You send a task through a chat channel; the system runs a coding agent on the server, edits code, commits, and pushes to a working branch - even when your personal computer is turned off. The design is **security-first**: secrets never live in code or chat, the system is split across three services that do not trust each other with the same credentials, and the coding agent's irreversible tool calls (pushing to `main`, deleting data, download-and-execute, sending data out) are gated behind an explicit Allow/Deny prompt sent to your phone — a per-tool, fail-closed gate that ships enabled by default. This repository publishes the architecture, policies, and a runnable demo domain - not a turnkey deployment of one person's private setup. **§2 maps which parts ship as running code, which are flag-gated in the demo, and which are documented targets; check it before assuming a control is active.**
 
+![Architecture overview](diagrams/architecture-overview.png)
+
 ---
 
 ## 2. What runs where

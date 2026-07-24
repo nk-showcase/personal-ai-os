@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Personal AI OS — Architecture Map</title>
+<style>
+  :root{
+    --ink:#14181f; --muted:#59636e; --line:#d7dde4; --accent:#23406e;
+    --card:#ffffff; --wash:#f5f7fa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:#fff;}
+  body{
+    width:1600px;height:848px;overflow:hidden;
+    font-family:Helvetica,Arial,sans-serif;color:var(--ink);
+    padding:34px 40px 26px;display:flex;flex-direction:column;gap:16px;
+  }
+  /* ---------- header ---------- */
+  .hdr{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--ink);padding-bottom:14px;}
+  .hdr h1{font-size:34px;letter-spacing:-.3px;}
+  .hdr .sub{font-size:15.5px;color:var(--muted);margin-top:6px;}
+  .hdr-right{text-align:right;font-size:13px;color:var(--muted);line-height:1.55;}
+  .hdr-right b{color:var(--ink);font-weight:700;}
+  /* ---------- generic blocks ---------- */
+  .row{display:flex;gap:16px;}
+  .block{border:1.5px solid var(--line);border-radius:6px;background:var(--card);padding:14px 16px;}
+  .bt{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+  .num{width:22px;height:22px;background:var(--accent);color:#fff;font-size:13px;font-weight:700;
+       display:flex;align-items:center;justify-content:center;border-radius:4px;flex:none;}
+  .bt h2{font-size:16.5px;text-transform:uppercase;letter-spacing:.04em;}
+  ul{list-style:none;}
+  /* ---------- block 1: what it does ---------- */
+  .what{flex:38 1 0;}
+  .what li{font-size:14px;line-height:1.45;padding:7px 0 7px 14px;position:relative;border-bottom:1px solid var(--wash);}
+  .what li:last-child{border-bottom:none;}
+  .what li::before{content:"";position:absolute;left:0;top:14px;width:6px;height:6px;background:var(--accent);}
+  .what b{font-weight:700;}
+  /* ---------- block 2: services ---------- */
+  .svc{flex:62 1 0;}
+  .svc-row{display:flex;align-items:stretch;gap:0;}
+  .svc-card{flex:1;border:1.5px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--wash);}
+  .svc-card h3{font-size:14.5px;margin-bottom:2px;}
+  .svc-card .usr{font-size:12px;color:var(--muted);font-family:Menlo,monospace;margin-bottom:7px;}
+  .svc-card p{font-size:12.5px;line-height:1.42;}
+  .svc-card p+p{margin-top:5px;}
+  .holds{color:var(--ink);}
+  .never{color:var(--muted);}
+  .holds::before{content:"holds: ";font-weight:700;}
+  .never::before{content:"never holds: ";font-weight:700;}
+  .arrow{align-self:center;flex:none;width:34px;text-align:center;color:var(--accent);font-size:19px;font-weight:700;}
+  .svc-note{margin-top:9px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--wash);padding-top:8px;}
+  .svc-note b{color:var(--ink);}
+  /* ---------- block 3: security ---------- */
+  .sec{flex:62 1 0;}
+  .sec-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
+  .sec-item{border:1.5px solid var(--line);border-left:4px solid var(--accent);border-radius:4px;padding:8px 11px;background:#fff;}
+  .sec-item h4{font-size:13.5px;margin-bottom:3px;}
+  .sec-item p{font-size:12px;line-height:1.38;color:var(--muted);}
+  /* ---------- block 4: integrations ---------- */
+  .integ{flex:38 1 0;}
+  .integ li{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:6.5px 0;border-bottom:1px solid var(--wash);}
+  .integ li:last-child{border-bottom:none;}
+  .integ .role{color:var(--muted);font-size:12.5px;text-align:right;}
+  .integ b{font-weight:700;}
+  /* ---------- facts strip ---------- */
+  .facts{display:flex;border:2px solid var(--ink);border-radius:6px;overflow:hidden;margin-top:auto;}
+  .fact{flex:1;padding:12px 10px;text-align:center;border-right:1px solid var(--line);}
+  .fact:last-child{border-right:none;}
+  .fact .v{font-size:23px;font-weight:700;color:var(--accent);}
+  .fact .k{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.3;}
+  .foot{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);padding-top:2px;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <h1>Personal AI OS &mdash; architecture map</h1>
+    <div class="sub">A single-user, security-first agentic coding system on an always-on server &mdash; driven entirely from a phone</div>
+  </div>
+  <div class="hdr-right">
+    <b>github.com/nk-showcase/personal-ai-os</b><br>
+    Reference architecture + runnable demo domain &middot; MIT license<br>
+    Built and documented with Claude Code
+  </div>
+</div>
+
+<div class="row">
+  <div class="block what">
+    <div class="bt"><span class="num">1</span><h2>What it does</h2></div>
+    <ul>
+      <li><b>Agentic coding from a phone:</b> send a task in chat &mdash; a coding agent on the server edits code, commits, and pushes to a working branch, even when the personal computer is off.</li>
+      <li><b>Personal domains driven by chat:</b> each feature (the published demo is a notes domain) reuses the same machinery &mdash; queue, worker, encrypted store, replies.</li>
+      <li><b>Self-updating:</b> services restart on new code only if it compiles, so a bad edit cannot wedge the system.</li>
+      <li><b>Always on:</b> runs 24/7 as three system services on a dedicated server.</li>
+    </ul>
+  </div>
+
+  <div class="block svc">
+    <div class="bt"><span class="num">2</span><h2>Three services &mdash; zero-trust split</h2></div>
+    <div class="svc-row">
+      <div class="svc-card">
+        <h3>Keyless transport</h3>
+        <div class="usr">OS user: aios-bot</div>
+        <p>Receives chat messages, verifies the owner, enqueues tasks.</p>
+        <p class="holds">chat token only</p>
+        <p class="never">agent credentials, git key, integration secrets</p>
+      </div>
+      <div class="arrow">&#8594;</div>
+      <div class="svc-card">
+        <h3>Keyed integrations worker</h3>
+        <div class="usr">OS user: aios-integrations</div>
+        <p>Decrypts the context store, talks to external services, sends replies itself.</p>
+        <p class="holds">integration secrets, store key</p>
+        <p class="never">coding-agent credentials</p>
+      </div>
+      <div class="arrow">&#8594;</div>
+      <div class="svc-card">
+        <h3>Coding worker</h3>
+        <div class="usr">OS user: ai-os</div>
+        <p>Runs the coding agent: edits, commits, pushes to a working branch.</p>
+        <p class="holds">agent session, local to server disk</p>
+        <p class="never">integration keys, chat token</p>
+      </div>
+    </div>
+    <div class="svc-note"><b>Hard boundary, not a convention:</b> three separate OS user accounts connected only through a durable task queue &mdash; each service holds only its own credentials, and units refuse to start if the account split is missing.</div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="block sec">
+    <div class="bt"><span class="num">3</span><h2>Security controls</h2></div>
+    <div class="sec-grid">
+      <div class="sec-item"><h4>Allow / Deny gate on the phone</h4><p>Irreversible actions (push to main, deletes, downloads, outbound sends) wait for explicit approval. On by default, fail-closed: no answer in 5 min = deny.</p></div>
+      <div class="sec-item"><h4>Encryption at rest</h4><p>Personal free text in SQLite is envelope-encrypted: per-row data key wrapped by a master key held only by the keyed worker.</p></div>
+      <div class="sec-item"><h4>Secret manager, per-service scope</h4><p>Secrets live in a machine-account secret manager; each service gets a read-only token for exactly its own folder. Code uses secret names, never values.</p></div>
+      <div class="sec-item"><h4>Log redaction</h4><p>A filter scrubs secret-shaped values before anything reaches logs; a value-free scanner ships for auditing them.</p></div>
+      <div class="sec-item"><h4>Durable queues</h4><p>Tasks and pending approvals survive restarts &mdash; a crash does not silently drop work or approvals.</p></div>
+      <div class="sec-item"><h4>Compile-gated auto-restart</h4><p>A restart takes new code only if it byte-compiles &mdash; no crash loops on a broken edit.</p></div>
+    </div>
+  </div>
+
+  <div class="block integ">
+    <div class="bt"><span class="num">4</span><h2>Integrations</h2></div>
+    <ul>
+      <li><b>Telegram</b><span class="role">task intake and replies, owner-only</span></li>
+      <li><b>Notion</b><span class="role">live domain storage applier</span></li>
+      <li><b>Todoist</b><span class="role">live task applier</span></li>
+      <li><b>Git / GitHub</b><span class="role">working-branch pushes by the agent</span></li>
+      <li><b>Bitwarden Secrets Manager</b><span class="role">production secret backend</span></li>
+      <li><b>Mail</b><span class="role">policy written before code: read-only first, send only behind preview + confirm</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="facts">
+  <div class="fact"><div class="v">3</div><div class="k">services under 3 separate<br>OS user accounts</div></div>
+  <div class="fact"><div class="v">0</div><div class="k">secrets in code, git<br>or chat</div></div>
+  <div class="fact"><div class="v">default-on</div><div class="k">fail-closed approval gate<br>for dangerous actions</div></div>
+  <div class="fact"><div class="v">24/7</div><div class="k">phone-driven, computer-off<br>operation</div></div>
+  <div class="fact"><div class="v">4 + 1</div><div class="k">detailed architecture diagrams<br>+ runnable notes demo</div></div>
+</div>
+
+<div class="foot">
+  <span>Detailed views: components &amp; trust boundaries &middot; agentic task path &middot; secret path &middot; encryption envelope &mdash; in /diagrams</span>
+  <span>Personal AI OS &middot; architecture overview</span>
+</div>
+
+</body>
+</html>
