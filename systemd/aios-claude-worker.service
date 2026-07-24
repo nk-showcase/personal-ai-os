@@ -22,6 +22,16 @@ Environment=HOME=${AIOS_HOME}
 # systemd's default PATH excludes ~/.local/bin; without this, AIOS_SECRETS_BACKEND=bitwarden silently
 # no-ops and this worker's secrets (ANTHROPIC_API_KEY, GITHUB_REPO_WRITE_TOKEN) would not resolve.
 Environment=PATH=${AIOS_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin
+# Share ONE queue DB with the transport. Without these, each service (running as a different OS
+# user) computes a DIFFERENT queue path via Path.home(), so the bot would enqueue into one SQLite
+# while the worker reads another. AIOS_TASK_QUEUE_DB pins the shared absolute path;
+# AIOS_TASK_QUEUE_GROUP sets the group-rw perms so the two different-user services can share it.
+Environment=AIOS_TASK_QUEUE_DB=${AIOS_HOME}/.ai-os/queue/tasks.sqlite3
+Environment=AIOS_TASK_QUEUE_GROUP=aios-queue
+# Activate the fail-closed per-service secret allow-list. Without AIOS_SERVICE_NAME the check in
+# secrets_loader.get_secret is DISABLED (no-op); with it, this service can resolve ONLY its own
+# allow-listed secrets (see config/secrets-map.yaml).
+Environment=AIOS_SERVICE_NAME=claude-worker
 # Per-service env: AIOS_SECRETS_BACKEND + the service's BWS_ACCESS_TOKEN (scope: claude-worker).
 # Values are NOT in git. The leading '-' means: do not fail if the file does not exist yet.
 EnvironmentFile=-${AIOS_HOME}/.ai-os/env/claude-worker.env

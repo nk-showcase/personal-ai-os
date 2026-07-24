@@ -26,6 +26,14 @@ Environment=PATH=${AIOS_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin
 # single-user 0700/0600 — so this line is harmless before the group is provisioned.
 Environment=AIOS_DATA_DB=${AIOS_HOME}/.ai-os/data/aios.sqlite3
 Environment=AIOS_DATA_DB_GROUP=aios-queue
+# Share ONE task-queue DB with the coding worker (same idea as AIOS_DATA_DB above, but for the
+# task/approval/reply queue). Without these the transport and worker compute DIFFERENT paths via
+# Path.home() and never see each other's rows; the group makes the cross-user share work.
+Environment=AIOS_TASK_QUEUE_DB=${AIOS_HOME}/.ai-os/queue/tasks.sqlite3
+Environment=AIOS_TASK_QUEUE_GROUP=aios-queue
+# Activate the fail-closed per-service secret allow-list (a no-op unless AIOS_SERVICE_NAME is set).
+# This transport may then resolve ONLY TELEGRAM_BOT_TOKEN (see config/secrets-map.yaml).
+Environment=AIOS_SERVICE_NAME=telegram-bot
 # Per-service env: AIOS_SECRETS_BACKEND + this service's machine-account token (scope
 # telegram) + TELEGRAM_OWNER_ID (not a secret). Values are NOT in git. '-' = do not fail
 # if the file is not present yet.

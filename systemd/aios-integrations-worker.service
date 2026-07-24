@@ -20,17 +20,13 @@
 # outbound writes is a documented target - see docs/security/threat-model.md).
 # No Claude Code credentials and no GitHub token.
 #
-# The WorkingDirectory below is intentionally rooted under the coding worker's
-# home — the code is shared read-only between the coding worker and the
-# integrations-worker. For the OS-user boundary to hold, the operator must ALSO
-# enforce these filesystem permissions:
-#   * ${AIOS_HOME} mode 0755 (group-readable), but
-#   * ${AIOS_HOME}/.ai-os/env/*.env mode 0600 (private to each service user)
-#   * ${AIOS_INTEGRATIONS_HOME}/.ai-os/env/integrations-worker.env mode 0600
-# Token isolation lives in the EnvironmentFile partition, NOT in WorkingDirectory.
-# For stronger isolation (separate code trees), change WorkingDirectory + ExecStart
-# to ${AIOS_INTEGRATIONS_HOME}/apps/app/.venv/bin/python and arrange a read-only
-# bind-mount or a duplicate checkout.
+# Code isolation: this worker runs its code AND its Python venv from a ROOT-OWNED tree
+# (/opt/aios-integrations/app below) that the coding-worker user cannot write. So a compromised
+# coding worker cannot swap the code or interpreter this keyed worker executes on its next
+# restart (which would otherwise hand over the integration keys and the store key). The tree is
+# provisioned OUTSIDE the coding worker's home by the deploy — a root-owned checkout (or rsync),
+# refreshed only by a root-run update — so it is never writable by the coding worker.
+# Token isolation additionally lives in the private EnvironmentFile (mode 0600 per service user).
 [Unit]
 Description=AI OS - Integrations Worker (Notion/Todoist reads and writes)
 After=network-online.target
@@ -42,8 +38,9 @@ Type=simple
 # boundary — secrets for integrations live in this user's private files, not
 # shared with the coding executor.
 User=ai-os-integrations
-WorkingDirectory=${AIOS_HOME}/apps/app
-ExecStart=${AIOS_HOME}/apps/app/.venv/bin/python -m bot.integrations_worker
+# Root-owned, coding-worker-unwritable code tree (see the isolation note above).
+WorkingDirectory=/opt/aios-integrations/app
+ExecStart=/opt/aios-integrations/app/.venv/bin/python -m bot.integrations_worker
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
@@ -57,6 +54,9 @@ Environment=PATH=${AIOS_INTEGRATIONS_HOME}/.local/bin:/usr/local/bin:/usr/bin:/b
 Environment=AIOS_DATA_DB=${AIOS_HOME}/.ai-os/data/aios.sqlite3
 Environment=AIOS_DATA_DB_GROUP=aios-queue
 Environment=AIOS_SECRETS_BACKEND=bitwarden
+# Activate the fail-closed per-service secret allow-list (a no-op unless AIOS_SERVICE_NAME is set).
+# This worker may then resolve ONLY its own allow-listed secrets (see config/secrets-map.yaml).
+Environment=AIOS_SERVICE_NAME=integrations-worker
 # Faster claim so a proxied Notion/Todoist op is picked up in ~0.25s (interactive latency).
 Environment=AIOS_INTEGRATIONS_POLL_S=0.25
 # The worker's own machine-account token (scope NOTION/TODOIST), private to THIS
