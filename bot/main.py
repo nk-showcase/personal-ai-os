@@ -54,8 +54,8 @@ install_log_redaction()
 def router_handlers():
     """S6 S-1: handlers the unified router contributes. Pure + token-free so a test can assert
     the list is empty at OFF and contains exactly the catch-all at ON. Returns list[(handler, group)].
-    group=1 => structurally shadowed by group-0 handle_text (docs/architecture/s6-router-s1-skeleton.md
-    §0); never intercepts live traffic in S-1. router_transport is imported LAZILY (only at ON), so the
+    group=1 => structurally shadowed by group-0 handle_text (see
+    docs/architecture/s6-thin-transport-plan.md); never intercepts live traffic in S-1. router_transport is imported LAZILY (only at ON), so the
     OFF default never pulls handlers into bot.main's import graph."""
     if not config.unified_router_enabled():
         return []
@@ -220,12 +220,13 @@ def main():
     from . import aios_dead_letters_handler as _dl_handler
 
     # Chat memory that survives restarts (an os._exit auto-restart must not wipe the active chat).
-    # PicklePersistence with on_flush=False writes chat_data to disk after EVERY update, so an
+    # Persistence with on_flush=False writes chat_data to disk after EVERY update, so an
     # os._exit auto-restart loses nothing. Stored LOCAL-ONLY on the VPS in a 0700 owner-only dir
-    # (never git/cloud). BOUNDARY: this PTB pickle file is the framework's own conversation-state
-    # store and is distinct from the encrypted-at-rest context stores; it is protected by directory
-    # permissions and local-only placement, not by the at-rest cipher. See docs/security/threat-model.md.
-    from telegram.ext import PicklePersistence
+    # (never git/cloud) AND encrypted at rest: EncryptedPicklePersistence routes the framework's
+    # own pickle bytes through the same single-encryptor chokepoint as every other store, so the
+    # dialogue text this file carries is no longer cleartext-on-disk. Fail-closed: flag ON without
+    # a KEK raises instead of writing cleartext. See docs/security/threat-model.md.
+    from .ptb_state_cipher import EncryptedPicklePersistence
     from pathlib import Path as _Path
     _persist_dir = _Path(os.getenv("AIOS_PTB_STATE_DIR",
                                    str(_Path.home() / ".ai-os" / "data" / "ptb_state")))
@@ -234,7 +235,7 @@ def main():
         os.chmod(_persist_dir, 0o700)
     except OSError:
         pass
-    _persistence = PicklePersistence(
+    _persistence = EncryptedPicklePersistence(
         filepath=str(_persist_dir / "chat_state.pkl"), on_flush=False,
     )
 

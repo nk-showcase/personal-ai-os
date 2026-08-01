@@ -114,13 +114,24 @@ def scan_counts(text):
     return out
 
 
+# Renders exc_info tuples exactly the way handlers would (no extra imports).
+_EXC_FORMATTER = logging.Formatter()
+
+
 class RedactingFilter(logging.Filter):
     """logging.Filter that scrubs secret-shaped strings from each record.
 
     Renders the record's final message (``msg % args``); if redaction changed
     anything, replaces ``record.msg`` with the scrubbed text and clears
-    ``record.args`` so later formatting cannot re-introduce the raw value. Always
-    returns True (scrubs, never drops)."""
+    ``record.args`` so later formatting cannot re-introduce the raw value.
+
+    Tracebacks are scrubbed too: a Formatter appends the exception text AFTER
+    the message, so a secret inside an exception value or frame would bypass a
+    message-only scrub. The filter renders ``exc_info`` here, scrubs it, caches
+    the scrubbed text in ``record.exc_text`` (which Formatters reuse), and
+    clears ``exc_info`` so no later Formatter can re-render the raw traceback.
+    ``stack_info`` is scrubbed the same way. Always returns True (scrubs, never
+    drops)."""
 
     def filter(self, record):  # noqa: A003 (logging API name)
         try:
@@ -131,6 +142,25 @@ class RedactingFilter(logging.Filter):
         if red != msg:
             record.msg = red
             record.args = ()
+        # --- exception traceback (logger.exception / exc_info=...) ---
+        exc_info = getattr(record, "exc_info", None)
+        if exc_info and exc_info != (None, None, None):
+            try:
+                exc_text = record.exc_text or _EXC_FORMATTER.formatException(exc_info)
+            except Exception:
+                exc_text = None
+            if exc_text:
+                red_exc = redact(exc_text)
+                record.exc_text = red_exc
+                if red_exc != exc_text:
+                    record.exc_info = None
+        elif getattr(record, "exc_text", None):
+            record.exc_text = redact(record.exc_text)
+        # --- stack summary (stack_info=True) ---
+        if getattr(record, "stack_info", None):
+            red_stack = redact(record.stack_info)
+            if red_stack != record.stack_info:
+                record.stack_info = red_stack
         return True
 
 

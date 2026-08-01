@@ -10,20 +10,28 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=aios-bot
-WorkingDirectory=${AIOS_HOME}/apps/app
-ExecStart=${AIOS_HOME}/apps/app/.venv/bin/python -m bot.telegram_bot
+# This service's OWN home (${AIOS_BOT_HOME}) — never the coding worker's ${AIOS_HOME}.
+# Code, PATH, and the token env file live here, so the coding worker's account cannot
+# read the Telegram token (the boundary README §3 promises). Mirrors the
+# aios-integrations-worker.service pattern.
+WorkingDirectory=${AIOS_BOT_HOME}/apps/app
+ExecStart=${AIOS_BOT_HOME}/apps/app/.venv/bin/python -m bot.telegram_bot
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
+Environment=HOME=${AIOS_BOT_HOME}
 # Put ~/.local/bin on PATH so the secret-manager CLI resolves, for CONSISTENCY with the
 # other secret-backed units. No extra blast radius: this service's machine account is scoped
 # to only TELEGRAM_BOT_TOKEN, and its token also resolves directly from the env source first —
 # so this only makes loader behavior consistent.
-Environment=PATH=${AIOS_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PATH=${AIOS_BOT_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin
 # Share ONE queue DB with the integrations-worker. AIOS_DATA_DB pins the file;
 # AIOS_DATA_DB_GROUP makes connect() use group-rw perms so the (different-user) worker can
 # read/write the same file. If the group does not exist yet, connect() safely falls back to
 # single-user 0700/0600 — so this line is harmless before the group is provisioned.
+# NOTE: deliberately the SHARED location under ${AIOS_HOME} (same line as in the
+# integrations unit) — the queue is cross-service by design; only PRIVATE files move
+# to ${AIOS_BOT_HOME}.
 Environment=AIOS_DATA_DB=${AIOS_HOME}/.ai-os/data/aios.sqlite3
 Environment=AIOS_DATA_DB_GROUP=aios-queue
 # Share ONE task-queue DB with the coding worker (same idea as AIOS_DATA_DB above, but for the
@@ -36,8 +44,8 @@ Environment=AIOS_TASK_QUEUE_GROUP=aios-queue
 Environment=AIOS_SERVICE_NAME=telegram-bot
 # Per-service env: AIOS_SECRETS_BACKEND + this service's machine-account token (scope
 # telegram) + TELEGRAM_OWNER_ID (not a secret). Values are NOT in git. '-' = do not fail
-# if the file is not present yet.
-EnvironmentFile=-${AIOS_HOME}/.ai-os/env/telegram-bot.env
+# if the file is not present yet. Lives in THIS service's home, unreadable to other users.
+EnvironmentFile=-${AIOS_BOT_HOME}/.ai-os/env/telegram-bot.env
 NoNewPrivileges=true
 ProtectSystem=full
 

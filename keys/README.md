@@ -27,8 +27,8 @@ never leave the machine that owns it.
 
 ```sh
 mkdir -p "${AIOS_HOME}/.ai-os/keys"
-age-keygen -o "${AIOS_HOME}/.ai-os/keys/context.identity"
-chmod 600 "${AIOS_HOME}/.ai-os/keys/context.identity"
+age-keygen -o "${AIOS_HOME}/.ai-os/keys/context-vps.identity"
+chmod 600 "${AIOS_HOME}/.ai-os/keys/context-vps.identity"
 ```
 
 `age-keygen` prints the matching **public recipient** to stderr, e.g.:
@@ -40,13 +40,13 @@ Public key: age1PLACEHOLDER0000000000000000000000000000000000000000000000000
 Recover the public half at any time without exposing the private key:
 
 ```sh
-age-keygen -y "${AIOS_HOME}/.ai-os/keys/context.identity"
+age-keygen -y "${AIOS_HOME}/.ai-os/keys/context-vps.identity"
 ```
 
 Point the process at the identity file:
 
 ```sh
-export AIOS_CONTEXT_IDENTITY_FILE="${AIOS_HOME}/.ai-os/keys/context.identity"
+export AIOS_CONTEXT_IDENTITY_FILE="${AIOS_HOME}/.ai-os/keys/context-vps.identity"
 export AIOS_CONTEXT_ENCRYPTION=1
 ```
 

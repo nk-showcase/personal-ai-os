@@ -312,7 +312,7 @@ def save_state(chat_id: int, state: dict) -> None:
 # non-atomic read-modify-write of the SAME chat blob and silently lose one update. mutate() makes
 # the whole read->mutate->write ONE SQLite BEGIN IMMEDIATE write-transaction on one connection — the
 # lock IS the write-transaction (no separate lock table / reaper / token / asyncio.Lock). Spec:
-# docs/architecture/s6-router-stateful-35-mutate-lock.md. INERT: no live loop calls mutate yet.
+# docs/architecture/s6-thin-transport-plan.md (per-chat mutate/lock design). INERT: no live loop calls mutate yet.
 
 class ReentrantMutateError(RuntimeError):
     """mutate(C) called from inside a mutator that already holds chat C — compose into one mutator."""

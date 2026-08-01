@@ -98,7 +98,7 @@ def _note_col_encrypted(note_id: str) -> bool:
 # ============================================================================================
 check("notes is a dispatchable intent", "notes" in RD.DISPATCH_INTENTS)
 check("cut domains are NOT dispatchable",
-      not ({"health", "books", "theater", "recipe"} & set(RD.DISPATCH_INTENTS)))
+      not ({"domain_a", "domain_b", "domain_c", "domain_d"} & set(RD.DISPATCH_INTENTS)))
 
 
 async def _run_intent(action):

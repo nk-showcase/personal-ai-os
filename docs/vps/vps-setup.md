@@ -21,7 +21,8 @@
 
 ## Lay out
 - Repository: clone into `${AIOS_HOME}/apps/app` (working tree). Virtualenv at `${AIOS_HOME}/apps/app/.venv`. This path matches the `REPO=$HOME/apps/app` default used by every `scripts/vps_*.sh`, the `EnvironmentFile` in the systemd units, and the actual deploy — one path, not `/opt/ai-os/repo`.
-- `~/.claude/skills`, `~/.claude/hooks`, `~/.claude/settings.json` — symlinks into the repo (see auto-sync-rules.md).
+- `~/.claude/skills`, `~/.claude/hooks` — symlinks into the repo (see auto-sync-rules.md).
+- `~/.claude/settings.json` — a REAL local file, NOT a symlink (auto-sync-rules.md forbids symlinking it: machine-local settings must never enter the repo).
 - `~/.claude/.credentials.json` — Claude Code credentials, local-only, readable only by the service user.
 - systemd services (see `systemd/`), enabled only at the migration step that turns them on.
 

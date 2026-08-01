@@ -63,7 +63,7 @@ system never falls back to plaintext on the queue path.
 
 | Term | Meaning |
 |---|---|
-| `bot.service`, `worker.service`, `integrations.service`, `sync.service` | the four systemd units — services the OS starts, supervises and restarts |
+| `aios-telegram-bot.service`, `aios-claude-worker.service`, `aios-integrations-worker.service`, `aios-sync.service` | the four systemd units (see `systemd/`) — services the OS starts, supervises and restarts |
 | transport | the process that only moves messages in and out (Telegram polling, owner check, reply delivery) — it holds no intelligence and no sensitive keys |
 | `0700` / `0600` | Unix file permissions: directory/file readable by the owning user only |
 | durable rows | queue items stored as database rows, not in memory — they survive crashes and restarts |

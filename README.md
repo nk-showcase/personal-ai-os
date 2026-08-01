@@ -41,7 +41,7 @@ The system never runs as one privileged process. It is split into three services
 1. **Keyless transport** (`telegram-bot`, user `aios-bot`)
    Receives messages from the chat channel, checks the sender is the owner, and puts a task on the queue. It holds **only** the chat-channel token - no coding-agent credentials, no git push key, no integration secrets. Compromising transport yields nothing but the ability to enqueue.
 
-2. **Keyed integrations worker** (`integrations-worker`, user `aios-integrations`)
+2. **Keyed integrations worker** (`integrations-worker`, user `ai-os-integrations`)
    The service that holds integration secrets. On the store-view path shipped here it **decrypts the encrypted context store itself and sends the reply to the chat itself** (using its own chat-channel token), so the transport never sees decrypted content or integration keys. Because it sends replies, its allowlist includes the chat-channel token in addition to the integration keys - by design for this path. Mail is a documented future integration (no mail code ships here); the safety policy it must satisfy - read-only first, sending only behind preview + explicit confirm, one-time codes never shown in chat - is written down ahead of the code in `docs/security/mail-integration-policy.md`. The worker runs under its own OS user, so its on-disk secrets are unreadable by the coding worker.
 
 3. **Coding worker** (`claude-worker`, user `ai-os`)
@@ -69,7 +69,7 @@ For the full threat model and current boundaries, see `docs/security/`.
 
 ## 5. The demo `notes` domain
 
-Every "domain" in this architecture is a self-contained feature the operator drives by chat. The published example is a plain **notes** domain (`bot/aios_notes_store.py`): capture a note, list notes, delete a note. It exercises the same machinery as any real domain - enqueue, worker, context store, replies - without depending on any private external account. Use it to see the control flow end to end and as the template when adding your own domain. Note: the store is fail-closed, so the round-trip through the keyed worker requires encryption enabled — provision the production keys or the dev test-KEK (`AIOS_CONTEXT_ALLOW_TEST_KEK`, see `.env.example` and `bot/context_key.py`) before driving it; the shipped code default leaves encryption off.
+Every "domain" in this architecture is a self-contained feature the operator drives by chat. The published example is a plain **notes** domain (`bot/aios_notes_store.py`): capture a note and receive a summary; lower-level storage APIs also support listing and deletion. It exercises the same machinery as any real domain - enqueue, worker, context store, replies - without depending on any private external account. Use it to see the control flow end to end and as the template when adding your own domain. Note: the store is fail-closed, so the round-trip through the keyed worker requires encryption enabled — provision the production keys or the dev test-KEK (`AIOS_CONTEXT_ALLOW_TEST_KEK`, see `.env.example` and `bot/context_key.py`) before driving it; the shipped code default leaves encryption off.
 
 ---
 

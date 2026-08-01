@@ -2,7 +2,7 @@
 
 > Status: **DECIDED.** Lead-architect synthesis of code ground-truth, web research, and the 4-member council (CTO/Architect, CISO/Security, SRE, CFO/Pragmatist).
 > Scope: the database engine choice for AI OS on a dedicated always-on VPS, in light of (1) the unified-router migration, (2) the locked at-rest encryption ADR, (3) the Notion→VPS migration, (4) the non-developer "must not die" mandate.
-> Every load-bearing fact below was re-verified against the repo this session (citations inline). No secret values appear anywhere in this doc.
+> **Snapshot: written at decision time** (like the encryption ADR, this document describes the tree as it stood when the decision was made). Every load-bearing fact below was re-verified against the repo in that session (citations inline). Several items have **since been implemented** — those are marked inline with **Update (current tree):** notes. For the current state see `README.md` and `SECURITY.md`. No secret values appear anywhere in this doc.
 
 ---
 
@@ -26,15 +26,15 @@ SQLite only, multiple stdlib `sqlite3` files, all out-of-repo under `~/.ai-os/`,
 | Reply channel (worker→transport) | shares `tasks.sqlite3` | `bot/reply_queue.py:24-28`, `:35-48` | WAL, `busy_timeout=5000` (`:63-64`); **no `foreign_keys`** | bare `INSERT` + `delivered_ts` stamp |
 | Durable scheduler | shares `tasks.sqlite3` | `bot/schedule_queue.py:25-29`, `:36-51` | WAL, `busy_timeout=5000` (`:66-67`); **no `foreign_keys`** | bare `INSERT` (`add_scheduled`); claim via `BEGIN IMMEDIATE` |
 | Main store (lazy, may not exist yet) | `~/.ai-os/data/aios.sqlite3` (env `AIOS_DATA_DB`) | `bot/aios_storage.py:37-42`, `connect()` `:299-336` | WAL, `busy_timeout=5000`, `foreign_keys=ON`, `synchronous=NORMAL` (`:320-323`); re-chmods `-wal`/`-shm` siblings every connect (`:328-333`) | upserts; importers use explicit `BEGIN IMMEDIATE` |
-| Notes | `data/notes.db` (**in-repo data dir**) | `bot/aios_notes_store.py`, `_connect()` | WAL, `foreign_keys=ON`; **no `busy_timeout`** | upserts |
+| Notes — **Update (current tree):** shares the main store | `~/.ai-os/data/aios.sqlite3` via `aios_storage.connect` | `bot/aios_notes_store.py:17,32` | same as main store (WAL, `busy_timeout=5000`, `foreign_keys=ON`) | encrypted upserts via `context_cipher` |
 | Import staging | `~/.ai-os/staging/import_staging.sqlite3` | via `aios_storage.connect(db=...)` override (`:300-311`) | same as main store | dry-run import only |
 | Reference catalog | static catalog (module part of the full private system, not included in this public slice) | — | — | read-mostly; the ADR marks it personal-data-free, out of scope |
 
 Key schema facts the engine decision rests on: `tasks.task_text` is a plaintext `TEXT NOT NULL` column (`aios_storage`/`task_queue.py:62`); `replies.text` is plaintext `TEXT NOT NULL` (`reply_queue.py:41`); the tasks table's `status`/`priority`/`idempotency_key` are structured queryable columns (`aios_storage.py:83-94`); `audit_log` and `shadow_compare_log` are schema-enforced value-free (`aios_storage.py:164-173`, `:208-229`); `unrouted_inbox.raw_message` is a plaintext `TEXT` raw-user-text column (`aios_storage.py:154-161`).
 
-**Crypto substrate: none.** `requirements.txt` lists only `python-telegram-bot[job-queue]`, `python-dotenv`, `httpx`, `openai`, `anthropic`, `claude-agent-sdk` — verified no `cryptography`/`pynacl`/`age`/`sqlcipher`. At-rest encryption has zero implementation today (matches the `adr` context and the S6 transport plan's inbound-encryption prerequisite).
+**Crypto substrate at decision time: none.** `requirements.txt` then listed only `python-telegram-bot[job-queue]`, `python-dotenv`, `httpx`, `openai`, `anthropic`, `claude-agent-sdk` — no `cryptography`/`pynacl`/`age`/`sqlcipher`, and at-rest encryption had zero implementation (matching the `adr` context and the S6 transport plan's inbound-encryption prerequisite). **Update (current tree):** the scheme-3 AEAD has since shipped — `requirements.txt` includes `cryptography`, and `bot/context_cipher.py` + `bot/context_store.py` implement it (free-text encrypted, structured columns cleartext).
 
-**Service isolation: not real yet.** `aios-telegram-bot.service:12`, `aios-claude-worker.service:12`, `aios-sync.service:13` all run `User=ai-os` (verified). Only `aios-integrations-worker.service:43` is provisioned as a distinct `User=ai-os-integrations` — and that unit is OFF.
+**Service isolation at decision time: not real yet.** The transport, coding-worker, and sync units then all ran `User=ai-os`; only the (then-OFF) integrations unit was provisioned with a distinct account. **Update (current tree):** the split is implemented — `aios-telegram-bot.service:12` runs `User=aios-bot`, `aios-integrations-worker.service:40` runs `User=ai-os-integrations`, `aios-claude-worker.service:14` and `aios-sync.service:13` run `User=ai-os` (see §6 and `README.md` §3).
 
 ---
 
@@ -88,7 +88,7 @@ There is no engine-level "hybrid" worth taking. The only "hybrid" the council ac
 ### Council disagreement, resolved explicitly
 All four councils independently rank Option 1 first and Postgres last — there is **no disagreement on the decision**. The only divergences are about emphasis of the *single biggest risk*, and two of them must be corrected against code:
 
-1. **"Biggest risk = silent state-clobber" (CTO, SRE-secondary) vs "= same-user cosmetic encryption" (CISO, CFO) — both are real, neither is the engine, and I rank them: cosmetic encryption FIRST.** The CISO/CFO point is verified and load-bearing: encrypting columns while `aios-telegram-bot` and `aios-claude-worker` both run `User=ai-os` (verified `aios-telegram-bot.service:12` / `aios-claude-worker.service:12`) means same-UID `0600` does **not** isolate — the internet-facing transport can read the worker's key file, so a transport compromise hands the attacker ciphertext *and* key. The ADR's whole isolation premise (`adr:82`) is currently false. This gates the encryption work and aligns with the owner's "leaks first" priority, so it outranks the clobber risk, which gates only the *router* work (a later phase).
+1. **"Biggest risk = silent state-clobber" (CTO, SRE-secondary) vs "= same-user cosmetic encryption" (CISO, CFO) — both are real, neither is the engine, and I rank them: cosmetic encryption FIRST.** The CISO/CFO point is verified and load-bearing: encrypting columns while `aios-telegram-bot` and `aios-claude-worker` both ran `User=ai-os` (decision-time state; the user split has since shipped — see §6) meant same-UID `0600` does **not** isolate — the internet-facing transport can read the worker's key file, so a transport compromise hands the attacker ciphertext *and* key. The ADR's whole isolation premise (`adr:82`) is currently false. This gates the encryption work and aligns with the owner's "leaks first" priority, so it outranks the clobber risk, which gates only the *router* work (a later phase).
 
 2. **"Biggest risk = your backups may be silently incomplete" (SRE) — PARTIALLY STALE, corrected.** Verified: `scripts/aios_backup.py:60` already uses `VACUUM INTO` (WAL-aware, single consistent file) and a restore drill exists. The SRE's catastrophic framing is already mitigated *for the main store*. The **precise** residual gap: `aios_backup.py` defaults to `aios_storage.db_path()` (`:91-97`), so the **queue DB `tasks.sqlite3`** — which under the router holds inbound envelopes + `conv_state` + replies + schedules, i.e. the live conversational state — is only snapshotted if the tool is invoked with that path explicitly. The backup *mechanism* is correct; its *coverage* must be extended to the queue DB before the router ships.
 
@@ -121,7 +121,7 @@ Until one of those is *demonstrated with data* (not anticipated), SQLite is the 
 5. **Extend the WAL-aware backup to the queue DB.** `aios_backup.py` already does the right thing (`VACUUM INTO`, `:60`) but defaults to the main store; snapshot `~/.ai-os/queue/tasks.sqlite3` too once it carries `conv_state`/replies/schedules.
 
 **Latent-divergence fixes (cheap, fold in while touching the code):**
-6. `notes.db` is **missing `busy_timeout`** (`bot/aios_notes_store.py`) — add it. (Correcting the council: notes is the *only* store missing it.)
+6. `notes.db` is **missing `busy_timeout`** (`bot/aios_notes_store.py`) — add it. (Correcting the council: notes is the *only* store missing it.) **Update (current tree): resolved** — the notes store now goes through `aios_storage.connect` (`bot/aios_notes_store.py:17,32`), which sets the shared PRAGMAs including `busy_timeout`.
 7. `reply_queue` / `schedule_queue` are **missing `foreign_keys=ON`** (verified — they *do* set `busy_timeout`, contrary to one council claim). Add `foreign_keys=ON` for consistency with the other stores.
 
 PRAGMAs already correct and not to be touched: WAL, `busy_timeout=5000`, `synchronous=NORMAL`, `BEGIN IMMEDIATE` on claim paths, `0700`/`0600` + `-wal`/`-shm` re-chmod (`aios_storage.py:320-333`).
@@ -170,12 +170,12 @@ PRIORITY 2 — ROUTER MIGRATION (the data-layer hardening lives HERE)
 ---
 
 ### Grounding index (re-verified this session)
-- Engine + access pattern: `bot/task_queue.py:43-47,97-121,139-170`; `bot/reply_queue.py:24-48,63-64`; `bot/schedule_queue.py:25-51,66-67`; `bot/aios_storage.py:37-42,83-94,154-173,208-229,299-336`; `bot/aios_notes_store.py` (no `busy_timeout`).
-- No crypto dep: `requirements.txt` (verified — no `cryptography`/`pynacl`/`age`/`sqlcipher`).
-- Same-user services: `systemd/aios-telegram-bot.service:12`, `aios-claude-worker.service:12`, `aios-sync.service:13` (`User=ai-os`); `aios-integrations-worker.service:43` (`User=ai-os-integrations`, OFF).
+- Engine + access pattern: `bot/task_queue.py:43-47,97-121,139-170`; `bot/reply_queue.py:24-48,63-64`; `bot/schedule_queue.py:25-51,66-67`; `bot/aios_storage.py:37-42,83-94,154-173,208-229,299-336`; `bot/aios_notes_store.py` (**Update:** now via `aios_storage.connect`, `busy_timeout` set).
+- Crypto dep at decision time: none. **Update (current tree):** `cryptography` is present in `requirements.txt`.
+- Service users at decision time: transport/worker/sync all `User=ai-os`. **Update (current tree):** `aios-telegram-bot.service:12` `User=aios-bot`; `aios-integrations-worker.service:40` `User=ai-os-integrations`; `aios-claude-worker.service:14`, `aios-sync.service:13` `User=ai-os`.
 - Backup is already WAL-aware but defaults to main store: `scripts/aios_backup.py:60,91-97`; `scripts/aios_restore_drill.py`.
 - Locked encryption design: `docs/security/adr-encryption-notion-migration.md` (scheme 3 `:26-41`; plaintext-boundary-via-separate-users `:80-85`,`:307`; importer/migration `:160-199`; field map `:164-176`; Phase 0 user split + keygen `:143`,`:266`).
 - Router transport plan: `docs/architecture/s6-thin-transport-plan.md` (queue write multiplication + lifecycle; per-`chat_id` lock not free; timers-as-writers; inbound/reply/conv_state encryption hard prereqs).
 - Research basis (engine scale + Postgres-has-no-TDE → client AEAD): `sqlite.org/whentouse.html`, `sqlite.org/np1queue.html`, `sqlite.org/wal.html`; `postgresql.org/docs/current/pgcrypto.html`, `postgresql.org/docs/current/encryption-options.html`, `postgresql.org/docs/current/pgupgrade.html`.
 
-**One correction applied to the council inputs (honesty):** the CTO/CFO claim that reply/schedule queues lack `busy_timeout` is wrong — they set it (`reply_queue.py:64`, `schedule_queue.py:67`); they lack `foreign_keys=ON`. Notes is the store actually missing `busy_timeout`. And the SRE "backups may be silently incomplete" risk is already mitigated in code (`VACUUM INTO`) except for queue-DB coverage. These corrections do not change the decision; they sharpen the hardening list in §6.
+**One correction applied to the council inputs (honesty):** the CTO/CFO claim that reply/schedule queues lack `busy_timeout` is wrong — they set it (`reply_queue.py:64`, `schedule_queue.py:67`); they lack `foreign_keys=ON`. Notes was the store then missing `busy_timeout` (since resolved — see §6 item 6). And the SRE "backups may be silently incomplete" risk is already mitigated in code (`VACUUM INTO`) except for queue-DB coverage. These corrections do not change the decision; they sharpen the hardening list in §6.

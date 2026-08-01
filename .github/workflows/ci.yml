@@ -40,6 +40,9 @@ jobs:
       TELEGRAM_OWNER_ID: "123456789"
       ANTHROPIC_API_KEY: "sk-ant-dummy"
       PYTHONPATH: "."
+      # requirements.txt is installed below, so a test that would self-skip on a missing
+      # runtime dependency must FAIL here instead of reporting a silent green.
+      AIOS_TEST_REQUIRE_DEPS: "1"
     steps:
       - name: Check out
         uses: actions/checkout@v4

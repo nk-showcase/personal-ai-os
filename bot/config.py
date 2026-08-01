@@ -69,7 +69,7 @@ def notion_raw_allowed() -> bool:
 # OFF => the transport catch-all is NOT registered; handle_text/handle_photo run the legacy
 # in-process path exactly as today (bot byte-identical). Opt-in is an EXPLICIT truthy env value.
 # NOTE: even at ON, S-1 registers the catch-all at group=1 (structurally shadowed by group-0
-# handle_text); live interception is deferred to S-5. See docs/architecture/s6-router-s1-skeleton.md.
+# handle_text); live interception is deferred to S-5. See docs/architecture/s6-thin-transport-plan.md.
 UNIFIED_ROUTER = _is_truthy(os.getenv("AIOS_UNIFIED_ROUTER"))  # default OFF
 
 

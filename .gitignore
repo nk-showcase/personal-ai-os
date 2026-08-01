@@ -1,8 +1,28 @@
 __pycache__/
 *.pyc
-.env
+.DS_Store
 .venv/
 *.db
-.venv/
 
-.DS_Store
+# Secrets & keys must never enter git (SECURITY.md 1.2)
+.env
+*.env
+.credentials.json
+*credentials*
+*secret*
+secrets-cache/
+.secrets-cache/
+*.key
+*.pem
+*.identity
+*.age
+
+# Explicit value-free exceptions (names/policies only, no values)
+!config/secrets-map.yaml
+!bot/secrets_loader.py
+!scripts/test_secret_policy.py
+!scripts/test_secrets_loader.py
+!scripts/vps_pre_secret_sanity_check.sh
+!docs/security/**
+!diagrams/secret-path.drawio
+!diagrams/secret-path.png

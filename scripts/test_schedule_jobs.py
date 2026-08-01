@@ -28,10 +28,11 @@ sys.path.insert(0, os.getcwd())
 _DB = os.path.join(tempfile.mkdtemp(prefix="aios_sjobs_"), "q.sqlite3")
 os.environ["AIOS_TASK_QUEUE_DB"] = _DB
 
-# A configurable timezone for the test clock (an arbitrary non-zero offset). The SAME zone drives the schedule
+# A configurable NON-UTC timezone for the test clock, chosen arbitrarily (any fixed offset works;
+# the point is boundary coverage with a non-zero offset). The SAME zone drives the schedule
 # default (AIOS_SCHEDULE_TZ, set BEFORE importing schedule_jobs) and the wall-clock readbacks, so the
-# boundary + re-arm assertions stay internally consistent (no UTC-vs-local mismatch). Etc/GMT+7 is the
-# IANA spelling of UTC-7 (POSIX sign convention).
+# boundary + re-arm assertions stay internally consistent (no UTC-vs-local mismatch). Etc/GMT+7 is
+# the IANA spelling of UTC-7 (POSIX sign convention).
 SCHED_TZ_NAME = "Etc/GMT+7"
 os.environ["AIOS_SCHEDULE_TZ"] = SCHED_TZ_NAME
 LOCAL_TZ = ZoneInfo(SCHED_TZ_NAME)

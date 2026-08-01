@@ -148,7 +148,7 @@ as a hard precondition:
 This command closes that precondition. The **other** route-on
 preconditions remain pending:
 
-- Distinct OS user `aios-integrations` provisioned on the VPS
+- Distinct OS user `ai-os-integrations` provisioned on the VPS
   (currently the systemd template references the user but the
   user must be created out of band).
 - `${AIOS_INTEGRATIONS_HOME}/.ai-os/env/integrations-worker.env`

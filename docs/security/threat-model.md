@@ -169,11 +169,45 @@ the inbox repository can read queued task text.
 ### 4.3 Reply payload is not encrypted at rest
 
 The reply payload that transits the reply queue is **not encrypted at rest**. Combined
-with §4.4, this means personal content is briefly present in cleartext in the transport
+with §4.5, this means personal content is briefly present in cleartext in the transport
 zone in the default configuration. This is a documented boundary of the current transport
 design, not a solved property.
 
-### 4.4 Personal views are sent by the keyed worker — single route
+### 4.4 Framework conversation state is encrypted at rest
+
+The Telegram framework keeps its own conversation state (`chat_data`, `user_data`,
+`bot_data`, callback data, conversation states) in a pickle file so an auto-restart does
+not drop an in-flight dialogue. That file is written by the framework, not by the storage
+layer, so it used to bypass the at-rest cipher and hold message text in cleartext.
+`bot/ptb_state_cipher.EncryptedPicklePersistence` encrypts it: the framework's own picklers
+and protocol are reused unchanged, and the resulting bytes go through the same
+single-encryptor chokepoint as every other store (scheme-3 AEAD). The three-state contract
+is the system-wide one — flag off writes a plain pickle, flag on with the key writes an
+envelope, flag on without a key raises and writes nothing (no partial or temp file is left
+behind). A cleartext file from an earlier deployment is read once and re-encrypted **in the
+same load call**, so the migration window does not extend to the next update; with the flag
+on and no key that migration raises instead of running half-protected. Covered by
+`scripts/test_ptb_state_encryption.py` (mandatory in CI — the suite fails rather than skips
+when the runtime dependencies are absent).
+
+Limits of this boundary, stated rather than implied:
+
+- **AAD binds the absolute path**, so an envelope cannot be decrypted from a different
+  location, including a same-named file in another directory. It does **not** carry a
+  monotonic version: an attacker with write access to the 0700 state directory can restore
+  an **older envelope of the same path** and it will authenticate. That is rollback of the
+  operator's own dialogue state, exposing no new plaintext; it is out of scope here.
+- **Key loss is a startup failure, not silent data loss.** If the KEK becomes unavailable or
+  is genuinely rotated (as opposed to resealed to the same key material), the existing state
+  file cannot be decrypted, the transport fails to initialise, and systemd restarts it in a
+  loop until the operator removes or re-provisions the state. Rotating the KEK for this file
+  is not supported; delete the state file (losing only in-flight dialogue context) instead.
+- **Pickle remains pickle.** Encryption authenticates the file against tampering by anyone
+  without the key, but a legacy cleartext file — or any file an attacker who already holds
+  the key can forge — is still deserialised by `pickle`. The 0700/0600 owner-only directory
+  is the control that keeps that reachable only by the account that already runs the code.
+
+### 4.5 Personal views are sent by the keyed worker — single route
 
 Decrypted personal views are rendered and delivered to Telegram **directly by the keyed
 worker** (`bot/aios_store_applier.py`, `store_view_applier`); they do **not** transit the
@@ -301,7 +335,8 @@ This model does **not** attempt to defend against:
 | 4.1 | Task/dialogue bodies plaintext in Git; only names/commits neutralized | Deferred (Block -1B) |
 | 4.2 | Laptop-task handoff body plaintext in inbox repo | Body encryption not implemented |
 | 4.3 | Reply payload not encrypted at rest | Current transport boundary |
-| 4.4 | Personal views rendered and sent by the keyed worker only; no receiver-side fallback | Single route |
+| 4.4 | Framework conversation-state file encrypted at rest through the single-encryptor chokepoint; fail-closed without a key; same-path rollback and KEK-loss startup failure documented as limits | Closed, with stated limits |
+| 4.5 | Personal views rendered and sent by the keyed worker only; no receiver-side fallback | Single route |
 | 5.1 | Write double-apply if caller retries without a stable business key | Idempotency contract on callers |
 | 5.2 | Due row with unregistered kind is dropped, not retried | Operational gap |
 | 6 | Thin-transport isolation partial: import-time key resolution removed, but inbound task text still persists in cleartext | In progress |

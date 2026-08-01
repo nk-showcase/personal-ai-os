@@ -5,7 +5,7 @@ build_route_runner() returns a runner(task) for claude_worker_core.process_one: 
 alias='router' rows (raises NotImplementedError on anything else, so nothing real fires by
 accident), parses the structural envelope from task_text, runs a TRIVIAL echo handler, and
 enqueues the reply via reply_queue. Real feature/classifier dispatch is deferred to S-2+.
-See docs/architecture/s6-router-s1-skeleton.md §3.
+See docs/architecture/s6-thin-transport-plan.md.
 """
 from __future__ import annotations
 

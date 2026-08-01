@@ -102,6 +102,27 @@ def main() -> int:
         h.flush()
         check("RedactingFilter scrubs via " + tag, gone(TG, buf.getvalue()))
 
+    # RedactingFilter scrubs exception TRACEBACKS (the error path: a secret
+    # inside a raised exception must not reach the log via exc_info/exc_text)
+    buf = io.StringIO()
+    lg = logging.getLogger("test_lr_exc")
+    lg.handlers[:] = []
+    lg.propagate = False
+    h = logging.StreamHandler(buf)
+    h.setFormatter(logging.Formatter("%(levelname)s %(message)s"))
+    h.addFilter(LR.RedactingFilter())
+    lg.addHandler(h)
+    lg.setLevel(logging.INFO)
+    try:
+        raise RuntimeError("boom while calling " + URL)
+    except RuntimeError:
+        lg.exception("task failed")
+    h.flush()
+    out = buf.getvalue()
+    check("traceback: token inside exception value redacted", gone(TG, out))
+    check("traceback itself preserved (only the secret replaced)",
+          "Traceback (most recent call last)" in out and "RuntimeError" in out)
+
     # install_log_redaction: levels + idempotency
     for n in ("httpx", "httpcore", "urllib3"):
         logging.getLogger(n).setLevel(logging.INFO)

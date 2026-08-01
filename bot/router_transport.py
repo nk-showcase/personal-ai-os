@@ -3,7 +3,7 @@
 `route_catch_all` is the default-group catch-all the unified router registers ONLY when
 AIOS_UNIFIED_ROUTER is ON (via main.router_handlers()), and even then at group=1 — so it is
 structurally shadowed by group-0 handle_text and NEVER intercepts live owner traffic in S-1
-(see docs/architecture/s6-router-s1-skeleton.md §0). It is exercised only by the offline test.
+(see docs/architecture/s6-thin-transport-plan.md). It is exercised only by the offline test.
 
 It auths (owner-only), builds a structural metadata envelope (NO classification, NO secrets),
 and enqueues a 'route' row on the durable task queue. The worker (router_worker) consumes it and

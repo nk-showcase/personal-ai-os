@@ -2,8 +2,8 @@
 
 > One narrative of two coupled moves that were carried out together:
 > (1) moving the operator's personal free-text out of a third-party hosted document store
-> and into a local, encrypted-at-rest store, and (2) thinning the Telegram transport down
-> to a pure message pipe so it never holds keys or plaintext. High level, no code cites.
+> and into a local, encrypted-at-rest store, and (2) thinning the Telegram transport
+> so that personal content and encryption keys stay with the keyed worker. High level, no code cites.
 
 ## Where it started
 
@@ -69,7 +69,7 @@ Only once the local store held and re-verified every record was the hosted store
 
 ## How the transport got thin
 
-The transport was reduced to a pipe by moving work behind a durable queue:
+The transport was thinned by moving work behind a durable queue:
 
 - **Enqueue, don't execute.** The only write the transport performs is to authenticate the
   operator and enqueue an intent row; it acknowledges and stops there.
@@ -91,9 +91,15 @@ had to be split out of the transport's import chain, not merely retained.
 
 ## Where it ended
 
-After the migration the personal free-text lives in a local store, encrypted at rest under
-a master key that only the keyed worker can read. The transport is a thin pipe that holds
-one token, no encryption keys, and no personal plaintext. The keyed worker, running as a
-separate OS user, does all decryption and sends all personal-content replies directly. The
-two moves together turn "the most-attacked process holds everything" into "the
-most-attacked process holds almost nothing."
+After the migration the personal free-text lives in a local store, encrypted at rest
+under a master key that only the keyed worker can read.
+
+The result is a capability boundary, not a claim that the transport is merely a pipe.
+The keyed worker owns personal-content views and both daily and precise reminders. The
+transport retains first-pass update handling, reply-queue delivery, and self-restart
+supervision; it holds one Telegram token and no encryption keys.
+
+It also still registers business commands and text, photo, document, and callback
+handlers. Consolidating those handlers is deliberately out of scope: this is the
+permanent trade-off, with the residual transport exposure documented rather than
+disguised as completed isolation.

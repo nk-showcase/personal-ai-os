@@ -4,8 +4,8 @@
 - `CLAUDE.md` — system rules.
 - `docs/` — architecture, security, synchronization, migration, VPS notes.
 - `config/secrets-map.yaml` — secret-access map (NAMES only).
-- `claude/skills/`, `claude/hooks/` — Claude Code skills and guards (source of truth, symlinked into `~/.claude`).
-- `claude/settings.json` — template/reference ONLY. It is NOT the live user settings file and is NOT symlinked into `~/.claude`.
+- `claude/skills/`, `claude/hooks/` — Claude Code skills and guards (source of truth, symlinked into `~/.claude`). **Present only in the private installation** — this public tree ships just the empty `claude/hooks/` placeholder; the skill/guard contents are private.
+- `claude/settings.json` — template/reference ONLY. It is NOT the live user settings file and is NOT symlinked into `~/.claude`. **Present only in the private installation** (not in this public tree).
 - `systemd/` — service unit templates.
 - `bot/` — bot and worker code.
 - `scripts/` — tests and operator utilities.
@@ -16,7 +16,7 @@
 - Local cache of secret values (so the system does not fail when the secret manager is unreachable).
 - Logs, and the working clone of the repository.
 
-## Inside ~/.claude on the VPS
+## Inside ~/.claude on the VPS (private installation; the symlink targets are not part of this public tree)
 - `~/.claude/skills` -> symlink to `repo/claude/skills` (source of truth in git).
 - `~/.claude/hooks` -> symlink to `repo/claude/hooks` (source of truth in git).
 - `~/.claude/settings.json` — a REAL local file, NOT a symlink: user runtime/UI settings (for example, `theme`). Local-only, not in git, does NOT point at the repository.
