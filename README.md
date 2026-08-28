@@ -6,7 +6,8 @@
 
 > **Portfolio.** The automation work behind this system:
 > [live portfolio page](https://nk-showcase.github.io/) ·
-> [slide deck (PDF)](docs/Natalia_Kosovarova_AI_Portfolio_EN.pdf)
+> [slide deck (PDF)](docs/Natalia_Kosovarova_AI_Portfolio_EN.pdf) ·
+> [animated deck (PPTX)](docs/Natalia_Kosovarova_AI_Portfolio_EN.pptx)
 
 ## 1. What this is
 
