@@ -4,8 +4,9 @@
 > private repository, the documentation, and its verification - was done end to end by
 > Claude Code based on my directions.
 
-> **Portfolio deck.** A short slide deck on the automation work behind this system:
-> [Natalia Kosovarova - AI Automation Portfolio (PDF)](docs/Natalia_Kosovarova_AI_Portfolio_EN.pdf)
+> **Portfolio.** The automation work behind this system:
+> [live portfolio page](https://nk-showcase.github.io/) ·
+> [slide deck (PDF)](docs/Natalia_Kosovarova_AI_Portfolio_EN.pdf)
 
 ## 1. What this is
 
